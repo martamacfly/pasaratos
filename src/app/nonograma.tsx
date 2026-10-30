@@ -8,6 +8,7 @@ import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { clues, generate, runs } from '@/games/nonograma';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -25,6 +26,7 @@ export default function NonogramaScreen() {
     daily ? withSeed(seed, () => generate(10)) : withSeed(levelSeed('nonograma', 5, 1), () => generate(5)),
   );
   const [marks, setMarks] = useState<Mark[]>(() => Array(daily ? 100 : 25).fill(0));
+  const { undo, canUndo } = useUndo(marks, setMarks, picture);
   const [crossMode, setCrossMode] = useState(false);
   const [finished, setFinished] = useState(false);
 
@@ -169,6 +171,12 @@ export default function NonogramaScreen() {
                 variant={crossMode ? 'primary' : 'secondary'}
                 onPress={() => setCrossMode(true)}
                 style={{ flex: 1 }}
+              />
+              <Button
+                label="Deshacer"
+                variant="secondary"
+                onPress={undo}
+                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
               />
             </View>
           )}

@@ -8,6 +8,7 @@ import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { conflicts, generate, type Grid } from '@/games/binario';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -31,6 +32,7 @@ export default function BinarioScreen() {
     daily ? withSeed(seed, () => generate(6)) : withSeed(levelSeed('binario', 'medio', 1), () => generate(6)),
   );
   const [board, setBoard] = useState<Grid>(game.puzzle);
+  const { undo, canUndo } = useUndo(board, setBoard, game);
   const [finished, setFinished] = useState(false);
   const { board: size, panel } = useGameSizes(420);
   const cell = size / n;
@@ -139,7 +141,15 @@ export default function BinarioScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(level, nextStage)} />
             )
           ) : (
-            <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(game.puzzle)} />
+            <View style={styles.row}>
+              <Button
+                label="Deshacer"
+                variant="secondary"
+                onPress={undo}
+                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+              />
+              <Button label="Vaciar" variant="secondary" onPress={() => setBoard(game.puzzle)} style={{ flex: 1 }} />
+            </View>
           )}
         </View>
       }

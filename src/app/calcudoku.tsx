@@ -10,6 +10,7 @@ import { cageConflicts, generate } from '@/games/calcudoku';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
@@ -25,6 +26,7 @@ export default function CalcudokuScreen() {
   );
   const { n, cages, solution } = puzzle;
   const [board, setBoard] = useState<number[]>(() => Array(n * n).fill(0));
+  const { undo, canUndo } = useUndo(board, setBoard, puzzle);
   const [selected, setSelected] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const { board: boardSize, panel } = useGameSizes(420);
@@ -168,7 +170,10 @@ export default function CalcudokuScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
-            <NumberPad max={n} onPress={input} width={panel} />
+            <>
+              <NumberPad max={n} onPress={input} width={panel} />
+              <Button label="Deshacer" variant="secondary" onPress={undo} style={{ opacity: canUndo ? 1 : 0.5 }} />
+            </>
           )}
         </View>
       }

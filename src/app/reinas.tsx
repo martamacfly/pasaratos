@@ -8,6 +8,7 @@ import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { type CellState, conflicts, generate } from '@/games/reinas';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -35,6 +36,7 @@ export default function ReinasScreen() {
     daily ? withSeed(seed, () => generate(7)) : withSeed(levelSeed('reinas', 7, 1), () => generate(7)),
   );
   const [board, setBoard] = useState(() => emptyBoard(7));
+  const { undo, canUndo } = useUndo(board, setBoard, puzzle);
   const { n, regions } = puzzle;
   const { board: size, panel } = useGameSizes(460);
   const cell = size / n;
@@ -157,7 +159,15 @@ export default function ReinasScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
-            <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(emptyBoard(n))} />
+            <View style={styles.row}>
+              <Button
+                label="Deshacer"
+                variant="secondary"
+                onPress={undo}
+                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+              />
+              <Button label="Vaciar" variant="secondary" onPress={() => setBoard(emptyBoard(n))} style={{ flex: 1 }} />
+            </View>
           )}
         </View>
       }

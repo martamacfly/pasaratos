@@ -7,6 +7,7 @@ import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { type Board, conflicts, type Difficulty, generate, sameUnit } from '@/games/sudoku';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -34,6 +35,16 @@ export default function SudokuScreen() {
   const [board, setBoard] = useState<Board>(game.puzzle);
   // Pencil marks per cell, as a bitmask of digits 1-9.
   const [notes, setNotes] = useState<number[]>(() => Array(81).fill(0));
+  // Undo covers both the digits and the pencil marks.
+  const undoState = useMemo(() => ({ board, notes }), [board, notes]);
+  const { undo, canUndo } = useUndo(
+    undoState,
+    (v) => {
+      setBoard(v.board);
+      setNotes(v.notes);
+    },
+    game,
+  );
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
 
@@ -200,6 +211,12 @@ export default function SudokuScreen() {
             </View>
             <View style={styles.row}>
               <Button label="Borrar" variant="secondary" onPress={() => input(0)} style={{ flex: 1 }} />
+              <Button
+                label="Deshacer"
+                variant="secondary"
+                onPress={undo}
+                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+              />
               <Button
                 label={notesMode ? '✏️ Notas: sí' : '✏️ Notas: no'}
                 variant={notesMode ? 'primary' : 'secondary'}

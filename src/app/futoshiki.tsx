@@ -10,6 +10,7 @@ import { generate, ineqConflicts } from '@/games/futoshiki';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { useUndo } from '@/hooks/useUndo';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
@@ -34,6 +35,7 @@ export default function FutoshikiScreen() {
       : withSeed(levelSeed('futoshiki', 'medio', 1), () => create('medio')),
   );
   const [board, setBoard] = useState<number[]>(puzzle.givens);
+  const { undo, canUndo } = useUndo(board, setBoard, puzzle);
   const [selected, setSelected] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const { n, givens, ineqs, solution } = puzzle;
@@ -190,7 +192,10 @@ export default function FutoshikiScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(level, nextStage)} />
             )
           ) : (
-            <NumberPad max={n} onPress={input} width={panel} />
+            <>
+              <NumberPad max={n} onPress={input} width={panel} />
+              <Button label="Deshacer" variant="secondary" onPress={undo} style={{ opacity: canUndo ? 1 : 0.5 }} />
+            </>
           )}
         </View>
       }
