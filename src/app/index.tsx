@@ -9,7 +9,14 @@ const GAMES = [
   { id: 'palabra', href: '/palabra', emoji: '🔤', name: 'Palabra oculta', desc: 'Adivina la palabra de 5 letras en 6 intentos.', color: '#D3F9D8' },
   { id: 'reinas', href: '/reinas', emoji: '👑', name: 'Reinas', desc: 'Una reina por fila, columna y color. Sin tocarse.', color: '#FFE8CC' },
   { id: 'crucigrama', href: '/crucigrama', emoji: '✏️', name: 'Crucigrama', desc: 'Completa las palabras a partir de sus pistas.', color: '#F3D9FA' },
+  { id: 'binario', href: '/binario', emoji: '☀️', name: 'Binario', desc: 'Soles y lunas a partes iguales, nunca tres seguidos.', color: '#FFF3BF' },
+  { id: 'buscaminas', href: '/buscaminas', emoji: '💣', name: 'Buscaminas', desc: 'Despeja el campo sin pisar ninguna mina.', color: '#E9ECEF' },
+  { id: 'nonograma', href: '/nonograma', emoji: '🖼️', name: 'Nonograma', desc: 'Pinta casillas según los números y descubre el dibujo.', color: '#C5F6FA' },
+  { id: 'sopa', href: '/sopa', emoji: '🔍', name: 'Sopa de letras', desc: 'Encuentra todas las palabras escondidas.', color: '#FFDEEB' },
 ] as const;
+
+// Games that can be lost show "won of played"; the rest only count solved puzzles.
+const CAN_LOSE = new Set<string>(['palabra', 'buscaminas']);
 
 /** Adds up the stats of every variant of a game (e.g. "sudoku:facil", "sudoku:medio"). */
 function total(all: Record<string, Stats>, id: string) {
@@ -46,7 +53,7 @@ export default function Home() {
               <Text style={styles.desc}>{g.desc}</Text>
               {t.played > 0 && (
                 <Text style={styles.stats}>
-                  {g.id === 'palabra' ? `✅ ${t.won} de ${t.played} acertadas` : `✅ ${t.won} resueltos`}
+                  {CAN_LOSE.has(g.id) ? `✅ ${t.won} de ${t.played} ganadas` : `✅ ${t.won} resueltos`}
                 </Text>
               )}
             </View>

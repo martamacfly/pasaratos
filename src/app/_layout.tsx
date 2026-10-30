@@ -20,6 +20,10 @@ export default function RootLayout() {
         <Stack.Screen name="palabra" options={{ title: 'Palabra oculta' }} />
         <Stack.Screen name="reinas" options={{ title: 'Reinas' }} />
         <Stack.Screen name="crucigrama" options={{ title: 'Crucigrama' }} />
+        <Stack.Screen name="binario" options={{ title: 'Binario' }} />
+        <Stack.Screen name="buscaminas" options={{ title: 'Buscaminas' }} />
+        <Stack.Screen name="nonograma" options={{ title: 'Nonograma' }} />
+        <Stack.Screen name="sopa" options={{ title: 'Sopa de letras' }} />
       </Stack>
     </>
   );
