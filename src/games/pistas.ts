@@ -104,3 +104,28 @@ export const PISTAS: { word: string; clue: string }[] = [
   { word: 'CABALLO', clue: 'Animal que relincha' },
   { word: 'RATON', clue: 'Roedor pequeño, también periférico del ordenador' },
 ];
+
+// Very short clues for the autodefinido, where clues are printed inside small grid cells.
+export const CORTAS: Record<string, string> = {
+  GATO: 'Felino casero', PERRO: 'Ladra', LUNA: 'Satélite', SOL: 'Astro rey', MAR: 'Agua salada',
+  ARBOL: 'Tiene tronco', LIBRO: 'Se lee', CASA: 'Hogar', PAN: 'Se hornea', QUESO: 'De leche',
+  TREN: 'Va por vías', AVION: 'Vuela', NUBE: 'En el cielo', LLUVIA: 'Cae del cielo', NIEVE: 'Copos',
+  RELOJ: 'Da la hora', SILLA: 'Asiento', MESA: 'Mueble', PIANO: 'Teclas', GUITARRA: 'Seis cuerdas',
+  TIGRE: 'Felino rayado', LEON: 'Melena', OSO: 'Hiberna', ABEJA: 'Pica', MIEL: 'Dulce',
+  ROSA: 'Flor', VERDE: 'Color hierba', AZUL: 'Color cielo', ROJO: 'Color sangre', NEGRO: 'Oscuro',
+  INVIERNO: 'Estación fría', VERANO: 'Estación', 'OTOÑO': 'Caen hojas', ENERO: 'Mes 1', LUNES: 'Día 1',
+  'ESPAÑA': 'País', ROMA: 'Capital', PARIS: 'Ciudad luz', NILO: 'Río egipcio', ANDES: 'Cordillera',
+  TIERRA: 'Planeta', MARTE: 'Planeta rojo', ESTRELLA: 'Brilla', FUEGO: 'Arde', AGUA: 'H2O',
+  AIRE: 'Se respira', HIELO: 'Frío sólido', MANO: 'Cinco dedos', OJO: 'Ve', NARIZ: 'Huele',
+  OREJA: 'Oye', CORAZON: 'Late', MEDICO: 'Cura', MAESTRO: 'Enseña', PINTOR: 'Pinta',
+  LIMON: 'Ácido', NARANJA: 'Cítrico', MANZANA: 'Fruta', UVA: 'Del vino', PERA: 'Fruta',
+  ARROZ: 'Cereal', SAL: 'Sazona', TAZA: 'Del café', CUCHARA: 'Cubierto', PELOTA: 'Bota',
+  FUTBOL: 'Deporte', TENIS: 'Raqueta', AJEDREZ: 'Jaque', DADO: 'Cubo', CARTA: 'Correo',
+  PUENTE: 'Cruza ríos', TORRE: 'Alta', PLAYA: 'Arena', ISLA: 'Entre agua', BOSQUE: 'Árboles',
+  'MONTAÑA': 'Cima', RIO: 'Corriente', LAGO: 'Agua quieta', BARCO: 'Navega', COCHE: 'Auto',
+  LLAVE: 'Abre', VENTANA: 'Cristal', PUERTA: 'Entrada', CAMA: 'Para dormir', 'SUEÑO': 'Al dormir',
+  RISA: 'Ja, ja', AMOR: 'Cariño', PAZ: 'No guerra', ORO: 'Metal', PLATA: 'Metal',
+  HIERRO: 'Metal', NOTA: 'Do, re…', ECO: 'Repite', ARCO: 'Flechas', IRIS: 'Del ojo',
+  ALAS: 'Para volar', NIDO: 'De pájaro', HUEVO: 'Gallina', TORTUGA: 'Caparazón', DELFIN: 'Cetáceo',
+  BALLENA: 'Enorme', CABALLO: 'Relincha', RATON: 'Roedor',
+};

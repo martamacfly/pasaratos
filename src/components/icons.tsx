@@ -188,6 +188,24 @@ const GAME_ICONS: Record<string, { bg: string; draw: () => ReactNode }> = {
       </G>
     ),
   },
+  grupos: {
+    bg: '#FFF9DB',
+    // Four rows in the four group colours.
+    draw: () =>
+      allCells(4).map(([r, c]) => (
+        <Rect key={`${r}-${c}`} x={22 + c * 15} y={22 + r * 15} width={11} height={11} rx={3} fill={['#FCC419', '#51CF66', '#339AF0', '#9775FA'][r]} />
+      )),
+  },
+  autodefinido: {
+    bg: '#FFF4E6',
+    draw: () => (
+      <G>
+        {grid(allCells(3), 3, '#FAB005', '#FFFFFF', (r, c) => (r === 0 && c === 0) || (r === 2 && c === 0))}
+        <Path d="M36 30 L44 36 L36 42 Z" fill="#E8590C" />
+        <Path d="M25 64 L31 72 L37 64 Z" fill="#E8590C" />
+      </G>
+    ),
+  },
   colores: {
     bg: '#F8F0FC',
     draw: () => (

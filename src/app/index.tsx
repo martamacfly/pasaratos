@@ -26,6 +26,8 @@ const SECTIONS: { title: string; games: Game[] }[] = [
       { id: 'palabra', href: '/palabra', name: 'Palabra oculta', desc: 'Adivina la palabra de 5 letras en 6 intentos.' },
       { id: 'crucigrama', href: '/crucigrama', name: 'Crucigrama', desc: 'Completa las palabras a partir de sus pistas.' },
       { id: 'sopa', href: '/sopa', name: 'Sopa de letras', desc: 'Encuentra todas las palabras escondidas.' },
+      { id: 'grupos', href: '/grupos', name: 'Grupos de 4', desc: 'Separa 16 palabras en 4 grupos con algo en común.' },
+      { id: 'autodefinido', href: '/autodefinido', name: 'Autodefinido', desc: 'Crucigrama con las pistas dentro de la cuadrícula.' },
     ],
   },
   {
@@ -42,7 +44,7 @@ const SECTIONS: { title: string; games: Game[] }[] = [
 const ALL_GAMES = SECTIONS.flatMap((s) => s.games);
 
 // Games that can be lost show "won of played"; the rest only count solved puzzles.
-const CAN_LOSE = new Set<string>(['palabra', 'buscaminas']);
+const CAN_LOSE = new Set<string>(['palabra', 'buscaminas', 'grupos']);
 const MAX_WIDTH = 1000;
 
 /** Adds up the stats of every variant of a game (e.g. "sudoku:facil", "sudoku:medio"). */
