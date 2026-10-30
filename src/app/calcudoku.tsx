@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { cageConflicts, generate } from '@/games/calcudoku';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
@@ -14,6 +15,7 @@ const SIZES = [4, 5, 6, 7];
 
 export default function CalcudokuScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('calcudoku');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate(5)) : generate(4)));
   const { n, cages, solution } = puzzle;
@@ -110,8 +112,8 @@ export default function CalcudokuScreen() {
         operación indicada.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -125,11 +127,11 @@ export default function CalcudokuScreen() {
               style={[
                 styles.cell,
                 { width: cell, height: cell, ...borders(i, r, c) },
-                i === selected && { backgroundColor: '#BAC8FF' },
+                i === selected && { backgroundColor: theme.main + '40' },
               ]}
             >
               {labelAt.has(i) && <Text style={[styles.label, { fontSize: Math.min(cell * 0.2, 15) }]}>{labelAt.get(i)}</Text>}
-              <Text style={{ fontSize: cell * 0.45, fontWeight: '600', color: bad.has(i) ? colors.danger : colors.accent }}>
+              <Text style={{ fontSize: cell * 0.45, fontWeight: '600', color: bad.has(i) ? colors.danger : theme.main }}>
                 {v || ''}
               </Text>
             </Pressable>
@@ -138,7 +140,7 @@ export default function CalcudokuScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/calcudoku')} />
@@ -157,7 +159,17 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   cell: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
   label: { position: 'absolute', top: 2, left: 4, fontWeight: '700', color: colors.text },
 });

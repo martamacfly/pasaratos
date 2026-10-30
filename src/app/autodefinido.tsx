@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { type Autodefinido, cellsOf, generate } from '@/games/autodefinido';
 import type { Dir, Entry } from '@/games/crucigrama';
 import { withSeed } from '@/games/random';
@@ -15,6 +16,7 @@ const emptyLetters = (p: Autodefinido) => p.cells.map((row) => row.map(() => '')
 
 export default function AutodefinidoScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('autodefinido');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate()) : generate()));
   const { rows, cols, cells, entries } = puzzle;
@@ -134,8 +136,8 @@ export default function AutodefinidoScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       {daily && <DailyHeader />}
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={styles.board}>
@@ -179,8 +181,8 @@ export default function AutodefinidoScreen() {
                   style={[
                     styles.letterCell,
                     { width: cell, height: cell },
-                    activeCells.has(key) && { backgroundColor: colors.accentSoft },
-                    isPos && { backgroundColor: '#91A7FF' },
+                    activeCells.has(key) && { backgroundColor: theme.soft },
+                    isPos && { backgroundColor: theme.main + '66' },
                     wrong && { backgroundColor: colors.dangerSoft },
                   ]}
                 >
@@ -196,7 +198,7 @@ export default function AutodefinidoScreen() {
 
       {solved ? (
         <View style={{ width: gridWidth, gap: 10 }}>
-          <Banner text={`¡Autodefinido completo en ${formatTime(seconds)}! 🎉`} />
+          <Banner text={`¡Autodefinido completo en ${formatTime(seconds)}!`} />
           {daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/autodefinido')} />
           ) : (
@@ -205,7 +207,7 @@ export default function AutodefinidoScreen() {
         </View>
       ) : (
         <>
-          <View style={[styles.clueBar, { width: gridWidth }]}>
+          <View style={[styles.clueBar, { width: gridWidth, backgroundColor: theme.soft }]}>
             <Text style={styles.clueBarText}>
               {entry.dir === 'across' ? '▶' : '▼'} {entry.clue} ({entry.word.length})
             </Text>
@@ -238,7 +240,17 @@ export default function AutodefinidoScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   board: { borderWidth: 1.5, borderColor: colors.text },
   block: { backgroundColor: '#343A40', borderWidth: 0.5, borderColor: '#212529' },
   clueCell: { backgroundColor: '#FFF3BF', borderWidth: 0.5, borderColor: '#BFA13A' },
@@ -252,12 +264,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  clueBar: { backgroundColor: colors.accentSoft, borderRadius: radius, padding: 12 },
+  clueBar: { borderRadius: radius, padding: 12 },
   clueBarText: { fontSize: 15, color: colors.text, fontWeight: '600' },
   actions: { flexDirection: 'row', gap: 8 },
   key: {
     height: 46,
-    backgroundColor: '#E2E0DA',
+    backgroundColor: colors.card,
+    borderBottomWidth: 3,
+    borderBottomColor: '#DAD6CC',
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

@@ -3,6 +3,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { generate, ineqConflicts } from '@/games/futoshiki';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
@@ -21,6 +22,7 @@ const create = (l: Level) => generate(LEVELS[l].n, LEVELS[l].extraSigns);
 
 export default function FutoshikiScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('futoshiki');
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'medio');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('medio')));
@@ -100,8 +102,8 @@ export default function FutoshikiScreen() {
         Rellena con números del 1 al {n} sin repetir en filas ni columnas, respetando los signos {'<'} y {'>'}.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={{ width: boardSize }}>
@@ -118,14 +120,14 @@ export default function FutoshikiScreen() {
                         styles.cell,
                         { width: cell, height: cell },
                         givens[i] !== 0 && { backgroundColor: '#ECEAE4' },
-                        i === selected && { backgroundColor: '#BAC8FF', borderColor: colors.accent },
+                        i === selected && { backgroundColor: theme.main + '40', borderColor: theme.main },
                       ]}
                     >
                       <Text
                         style={{
                           fontSize: cell * 0.5,
                           fontWeight: givens[i] ? '800' : '600',
-                          color: bad.has(i) && !givens[i] ? colors.danger : givens[i] ? colors.text : colors.accent,
+                          color: bad.has(i) && !givens[i] ? colors.danger : givens[i] ? colors.text : theme.main,
                         }}
                       >
                         {board[i] || ''}
@@ -154,7 +156,7 @@ export default function FutoshikiScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/futoshiki')} />
@@ -173,7 +175,17 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   cell: {
     backgroundColor: colors.card,
     borderRadius: radius / 2,

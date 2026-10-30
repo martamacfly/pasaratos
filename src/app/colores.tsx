@@ -124,8 +124,8 @@ export default function ColoresScreen() {
         el tablero.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · 🔗 {joined}/{pairs.length}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)} · Parejas {joined}/{pairs.length}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
@@ -164,7 +164,7 @@ export default function ColoresScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Todo conectado en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Todo conectado en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/colores')} />
@@ -183,7 +183,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   board: { backgroundColor: colors.card, borderRadius: radius, overflow: 'hidden', userSelect: 'none' },
   cell: { position: 'absolute', borderWidth: 0.5, borderColor: colors.border },
 });

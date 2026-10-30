@@ -100,8 +100,8 @@ export default function SudokuScreen() {
         </View>
       )}
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={[styles.grid, { width: size, height: size }]}>
@@ -155,7 +155,7 @@ export default function SudokuScreen() {
 
       {solved ? (
         <View style={{ width: size, gap: 10 }}>
-          <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />
+          <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />
           {daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/sudoku')} />
           ) : (
@@ -196,7 +196,17 @@ export default function SudokuScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, alignSelf: 'stretch', maxWidth: 460, width: '100%' },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

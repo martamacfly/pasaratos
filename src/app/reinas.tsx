@@ -88,8 +88,8 @@ export default function ReinasScreen() {
         Toca una vez para marcar ✕ y otra para poner la reina.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · Reinas {queens}/{n}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)} · Reinas {queens}/{n}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={{ width: size, height: size, flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -123,7 +123,7 @@ export default function ReinasScreen() {
       </View>
 
       <View style={{ width: size, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/reinas')} />
@@ -142,6 +142,16 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   cell: { alignItems: 'center', justifyContent: 'center', borderColor: '#212529' },
 });

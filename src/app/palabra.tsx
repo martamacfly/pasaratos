@@ -151,7 +151,7 @@ export default function PalabraScreen() {
 
       <View style={{ minHeight: 48, justifyContent: 'center', width: boardWidth }}>
         {won ? (
-          <Banner text={`¡Acertaste en ${guesses.length}/${tries}! 🎉`} />
+          <Banner text={`¡Acertaste en ${guesses.length}/${tries}!`} />
         ) : over ? (
           <Banner tone="danger" text={`La palabra era ${answer}`} />
         ) : message ? (
@@ -213,7 +213,9 @@ const styles = StyleSheet.create({
   message: { textAlign: 'center', color: colors.danger, fontWeight: '600', fontSize: 15 },
   key: {
     height: 52,
-    backgroundColor: '#E2E0DA',
+    backgroundColor: colors.card,
+    borderBottomWidth: 3,
+    borderBottomColor: '#DAD6CC',
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

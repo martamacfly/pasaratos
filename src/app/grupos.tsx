@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Banner, Button, DailyHeader } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { groupOf, PUZZLES } from '@/games/grupos';
 import { random, shuffle, withSeed } from '@/games/random';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -19,6 +20,7 @@ function deal(index: number) {
 
 export default function GruposScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('grupos');
   const [game, setGame] = useState(() =>
     daily ? withSeed(seed, () => deal(Math.floor(random() * PUZZLES.length))) : deal(Math.floor(Math.random() * PUZZLES.length)),
@@ -115,14 +117,13 @@ export default function GruposScreen() {
                 style={({ pressed }) => [
                   styles.tile,
                   { width: tile, height: tile * 0.75 },
-                  on && { backgroundColor: '#495057' },
+                  on && { backgroundColor: theme.main, borderBottomColor: theme.main },
                   pressed && { opacity: 0.8 },
                 ]}
               >
                 <Text
-                  style={[styles.word, { fontSize: w.length > 9 ? 10 : w.length > 6 ? 12 : 14 }, on && { color: '#fff' }]}
-                  numberOfLines={2}
-                  adjustsFontSizeToFit
+                  style={[styles.word, { fontSize: Math.min(15, (tile - 12) / (w.length * 0.82)) }, on && { color: '#fff' }]}
+                  numberOfLines={1}
                 >
                   {w}
                 </Text>
@@ -141,7 +142,7 @@ export default function GruposScreen() {
       <View style={{ minHeight: 22 }}>{message ? <Text style={styles.message}>{message}</Text> : null}</View>
 
       <View style={{ width: boardWidth, gap: 10 }}>
-        {won && <Banner text="¡Todos los grupos encontrados! 🎉" />}
+        {won && <Banner text="¡Todos los grupos encontrados!" />}
         {lost && <Banner tone="danger" text="Se acabaron los fallos. Estas eran las soluciones." />}
         {over ? (
           daily ? (
@@ -172,7 +173,9 @@ const styles = StyleSheet.create({
   stats: { fontSize: 15, color: colors.muted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tile: {
-    backgroundColor: '#E9E6DF',
+    backgroundColor: colors.card,
+    borderBottomWidth: 3,
+    borderBottomColor: '#DAD6CC',
     borderRadius: radius / 1.5,
     alignItems: 'center',
     justifyContent: 'center',

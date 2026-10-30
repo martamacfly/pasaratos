@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions,
 import { router } from 'expo-router';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { cellsOf, type Dir, type Entry, generate } from '@/games/crucigrama';
@@ -21,6 +22,7 @@ const create = (l: Level) => generate(LEVELS[l].words, LEVELS[l].maxSize);
 
 export default function CrucigramaScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('crucigrama');
   const [level, setLevel] = useState<Level>('normal');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('normal')) : create('normal')));
@@ -147,8 +149,8 @@ export default function CrucigramaScreen() {
         </View>
       )}
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View>
@@ -166,8 +168,8 @@ export default function CrucigramaScreen() {
                   style={[
                     styles.cell,
                     { width: cell, height: cell },
-                    activeCells.has(key) && { backgroundColor: colors.accentSoft },
-                    isPos && { backgroundColor: '#91A7FF' },
+                    activeCells.has(key) && { backgroundColor: theme.soft },
+                    isPos && { backgroundColor: theme.main + '66' },
                     wrong && { backgroundColor: colors.dangerSoft },
                   ]}
                 >
@@ -186,7 +188,7 @@ export default function CrucigramaScreen() {
 
       {solved ? (
         <View style={{ width: gridWidth, gap: 10 }}>
-          <Banner text={`¡Crucigrama completo en ${formatTime(seconds)}! 🎉`} />
+          <Banner text={`¡Crucigrama completo en ${formatTime(seconds)}!`} />
           {daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/crucigrama')} />
           ) : (
@@ -195,7 +197,7 @@ export default function CrucigramaScreen() {
         </View>
       ) : (
         <>
-          <View style={[styles.clueBar, { width: gridWidth }]}>
+          <View style={[styles.clueBar, { width: gridWidth, backgroundColor: theme.soft }]}>
             <Text style={styles.clueBarText}>
               {active.number} {active.dir === 'across' ? 'Horizontal' : 'Vertical'} · {active.clue}
             </Text>
@@ -233,7 +235,7 @@ export default function CrucigramaScreen() {
                   <Text
                     style={[
                       styles.clue,
-                      e === active && { backgroundColor: colors.accentSoft },
+                      e === active && { backgroundColor: theme.soft },
                       done && { color: colors.muted, textDecorationLine: 'line-through' },
                     ]}
                   >
@@ -253,7 +255,17 @@ export default function CrucigramaScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   levels: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   cell: {
     borderWidth: 0.5,
     borderColor: colors.text,
@@ -262,14 +274,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   number: { position: 'absolute', top: 1, left: 2, color: colors.muted, fontWeight: '600' },
-  clueBar: { backgroundColor: colors.accentSoft, borderRadius: radius, padding: 12 },
+  clueBar: { borderRadius: radius, padding: 12 },
   clueBarText: { fontSize: 15, color: colors.text, fontWeight: '600' },
   actions: { flexDirection: 'row', gap: 8 },
   heading: { fontSize: 16, fontWeight: '700', color: colors.text },
   clue: { fontSize: 15, color: colors.text, padding: 4, borderRadius: 6 },
   key: {
     height: 46,
-    backgroundColor: '#E2E0DA',
+    backgroundColor: colors.card,
+    borderBottomWidth: 3,
+    borderBottomColor: '#DAD6CC',
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

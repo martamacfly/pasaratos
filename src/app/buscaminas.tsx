@@ -126,8 +126,8 @@ export default function BuscaminasScreen() {
         </View>
       )}
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · Minas {flagsLeft}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)} · Minas {flagsLeft}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -163,7 +163,7 @@ export default function BuscaminasScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}! 🎉`} />}
+        {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}!`} />}
         {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina" />}
         {over ? (
           daily ? (
@@ -186,7 +186,17 @@ export default function BuscaminasScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   cell: { alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: '#B8B4AA' },
   closed: { backgroundColor: '#C9D3E6' },
   open: { backgroundColor: colors.card },

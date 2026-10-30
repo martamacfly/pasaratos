@@ -1,7 +1,9 @@
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { dateLabel } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { colors, radius } from '@/theme';
 
+/** Buttons take the colour of the game on screen. */
 export function Button({
   label,
   onPress,
@@ -13,40 +15,48 @@ export function Button({
   variant?: 'primary' | 'secondary';
   style?: ViewStyle;
 }) {
+  const theme = useGameTheme();
   const primary = variant === 'primary';
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        primary ? styles.primary : styles.secondary,
-        pressed && { opacity: 0.75 },
+        primary
+          ? [styles.primary, { backgroundColor: theme.main, shadowColor: theme.main }]
+          : [styles.secondary, { borderColor: theme.soft }],
+        pressed && { transform: [{ scale: 0.97 }], opacity: 0.9 },
         style,
       ]}
     >
-      <Text style={[styles.label, { color: primary ? '#fff' : colors.text }]}>{label}</Text>
+      <Text style={[styles.label, { color: primary ? '#fff' : theme.main }]}>{label}</Text>
     </Pressable>
   );
 }
 
 export function Banner({ text, tone = 'success' }: { text: string; tone?: 'success' | 'danger' }) {
   return (
-    <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.successSoft : colors.dangerSoft }]}>
-      <Text style={[styles.bannerText, { color: tone === 'success' ? colors.success : colors.danger }]}>{text}</Text>
+    <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.success : colors.danger }]}>
+      <Text style={styles.bannerText}>{text}</Text>
     </View>
   );
 }
 
 /** Keys 1..max plus an erase key; `onPress(0)` erases. */
 export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: number) => void; width: number }) {
+  const theme = useGameTheme();
   return (
     <View style={{ width, flexDirection: 'row', gap: 6 }}>
       {Array.from({ length: max }, (_, k) => k + 1).map((n) => (
-        <Pressable key={n} onPress={() => onPress(n)} style={({ pressed }) => [styles.key, pressed && { opacity: 0.7 }]}>
-          <Text style={styles.keyText}>{n}</Text>
+        <Pressable
+          key={n}
+          onPress={() => onPress(n)}
+          style={({ pressed }) => [styles.key, { borderBottomColor: theme.soft }, pressed && styles.keyPressed]}
+        >
+          <Text style={[styles.keyText, { color: theme.main }]}>{n}</Text>
         </Pressable>
       ))}
-      <Pressable onPress={() => onPress(0)} style={({ pressed }) => [styles.key, pressed && { opacity: 0.7 }]}>
+      <Pressable onPress={() => onPress(0)} style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}>
         <Text style={[styles.keyText, { color: colors.text }]}>⌫</Text>
       </Pressable>
     </View>
@@ -55,9 +65,11 @@ export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: n
 
 /** Shown instead of the difficulty buttons while playing the daily challenge. */
 export function DailyHeader() {
+  const theme = useGameTheme();
   return (
-    <View style={styles.daily}>
-      <Text style={styles.dailyText}>Reto del día · {dateLabel()}</Text>
+    <View style={[styles.daily, { backgroundColor: theme.soft }]}>
+      <Text style={[styles.dailyLabel, { color: theme.main }]}>RETO DEL DÍA</Text>
+      <Text style={styles.dailyText}>{dateLabel()}</Text>
     </View>
   );
 }
@@ -69,32 +81,44 @@ export function formatTime(seconds: number) {
 }
 
 const styles = StyleSheet.create({
-  button: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius, alignItems: 'center' },
-  primary: { backgroundColor: colors.accent },
-  secondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  label: { fontSize: 15, fontWeight: '600' },
-  banner: { padding: 12, borderRadius: radius, alignItems: 'center' },
-  bannerText: { fontSize: 16, fontWeight: '700' },
+  button: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  primary: { shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  secondary: { backgroundColor: colors.card, borderWidth: 2 },
+  label: { fontSize: 15, fontWeight: '800' },
+  banner: {
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  bannerText: { fontSize: 17, fontWeight: '900', color: '#fff', textAlign: 'center' },
   daily: {
-    backgroundColor: '#FFF3BF',
-    borderRadius: radius,
+    borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 16,
     alignSelf: 'stretch',
     maxWidth: 460,
     width: '100%',
     alignItems: 'center',
+    gap: 2,
   },
-  dailyText: { fontSize: 15, fontWeight: '700', color: '#8F6400' },
+  dailyLabel: { fontSize: 12, fontWeight: '900', letterSpacing: 1.5 },
+  dailyText: { fontSize: 15, fontWeight: '700', color: colors.text },
   key: {
     flex: 1,
     height: 56,
     backgroundColor: colors.card,
-    borderRadius: radius / 2,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 12,
+    borderBottomWidth: 3,
+    borderBottomColor: '#DAD6CC',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyText: { fontSize: 22, fontWeight: '600', color: colors.accent },
+  keyPressed: { transform: [{ translateY: 2 }], borderBottomWidth: 1 },
+  keyText: { fontSize: 22, fontWeight: '800' },
 });

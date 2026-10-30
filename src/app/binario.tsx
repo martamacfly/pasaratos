@@ -91,8 +91,8 @@ export default function BinarioScreen() {
         sin filas ni columnas repetidas. Toca una casilla para cambiarla.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={[styles.grid, { width: size, height: size }]}>
@@ -113,7 +113,7 @@ export default function BinarioScreen() {
       </View>
 
       <View style={{ width: size, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/binario')} />
@@ -132,7 +132,17 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.card },
   cell: { alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: colors.border },
 });

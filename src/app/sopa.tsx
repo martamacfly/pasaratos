@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { router } from 'expo-router';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { generate, lineBetween } from '@/games/sopa';
@@ -22,6 +23,7 @@ const create = (l: Level) => generate(LEVELS[l].size, LEVELS[l].words, LEVELS[l]
 
 export default function SopaScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('sopa');
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'facil');
   const [sopa, setSopa] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('facil')));
@@ -110,8 +112,8 @@ export default function SopaScreen() {
         {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · {found.length}/{words.length}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)} · {found.length}/{words.length}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View style={[styles.grid, { width: boardSize, height: boardSize }]}>
@@ -123,7 +125,7 @@ export default function SopaScreen() {
               styles.cell,
               { width: cell, height: cell },
               colorOf.has(i) && { backgroundColor: colorOf.get(i) },
-              start === i && { backgroundColor: colors.accent },
+              start === i && { backgroundColor: theme.main },
             ]}
           >
             <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: start === i ? '#fff' : colors.text }}>
@@ -134,7 +136,7 @@ export default function SopaScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Todas encontradas en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Todas encontradas en ${formatTime(seconds)}!`} />}
         <View style={styles.words}>
           {words.map((w) => {
             const done = found.includes(w.word);
@@ -159,7 +161,17 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.card, borderRadius: radius, overflow: 'hidden' },
   cell: { alignItems: 'center', justifyContent: 'center' },
   words: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },

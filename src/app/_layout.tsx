@@ -1,18 +1,22 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { colors } from '@/theme';
+import { themeFor } from '@/gameTheme';
 
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.bg },
-          headerShadowVisible: false,
-          headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: '700' },
-          contentStyle: { backgroundColor: colors.bg },
+        // Each game gets a header in its own colour and a soft tint of it as background.
+        screenOptions={({ route }) => {
+          const theme = themeFor(route.name);
+          return {
+            headerStyle: { backgroundColor: theme.main },
+            headerShadowVisible: false,
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: '800', fontSize: 20 },
+            contentStyle: { backgroundColor: theme.bg },
+          };
         }}
       >
         <Stack.Screen

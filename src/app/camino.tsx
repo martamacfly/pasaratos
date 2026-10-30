@@ -4,6 +4,7 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PathLines } from '@/components/PathLines';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { adjacent, caminoSolved, generateCamino } from '@/games/caminos';
 import { withSeed } from '@/games/random';
 import { useGridDrag } from '@/hooks/useGridDrag';
@@ -15,6 +16,7 @@ const SIZES = [5, 6, 7, 8];
 
 export default function CaminoScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('camino');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generateCamino(7)) : generateCamino(6)));
   const [path, setPath] = useState<number[]>([]);
@@ -104,8 +106,8 @@ export default function CaminoScreen() {
         Arrastra desde el 1 una línea que pase por todas las casillas y por los números en orden hasta el {last}.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · {path.length}/{n * n}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)} · {path.length}/{n * n}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
@@ -116,11 +118,11 @@ export default function CaminoScreen() {
             style={[
               styles.cell,
               { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
-              onPath.has(i) && { backgroundColor: solved ? colors.successSoft : colors.accentSoft },
+              onPath.has(i) && { backgroundColor: solved ? colors.successSoft : theme.soft },
             ]}
           />
         ))}
-        <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : colors.accent} />
+        <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : theme.main} />
         {Object.entries(clues).map(([c, num]) => {
           const i = Number(c);
           const size = cell * 0.62;
@@ -147,7 +149,7 @@ export default function CaminoScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Camino completo en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Camino completo en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/camino')} />
@@ -166,7 +168,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   board: { backgroundColor: colors.card, borderRadius: radius, overflow: 'hidden', userSelect: 'none' },
   cell: { position: 'absolute', borderWidth: 0.5, borderColor: colors.border },
   clue: { position: 'absolute', backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },

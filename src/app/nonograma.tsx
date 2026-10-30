@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { router } from 'expo-router';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
+import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { clues, generate, runs } from '@/games/nonograma';
@@ -14,6 +15,7 @@ type Mark = 0 | 1 | 2; // empty, filled, crossed
 
 export default function NonogramaScreen() {
   const { width } = useWindowDimensions();
+  const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('nonograma');
   const [n, setN] = useState(daily ? 10 : 5);
   const [picture, setPicture] = useState(() => (daily ? withSeed(seed, () => generate(10)) : generate(5)));
@@ -88,8 +90,8 @@ export default function NonogramaScreen() {
         Los números indican los bloques de casillas pintadas seguidas en cada fila y columna, en orden.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)}
-        {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
+        {formatTime(seconds)}
+        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
       </Text>
 
       <View>
@@ -118,7 +120,7 @@ export default function NonogramaScreen() {
                   style={[
                     styles.cell,
                     { width: cell, height: cell, borderRightWidth: line(c), borderBottomWidth: line(r) },
-                    marks[i] === 1 && { backgroundColor: solved ? colors.accent : colors.text },
+                    marks[i] === 1 && { backgroundColor: solved ? theme.main : colors.text },
                   ]}
                 >
                   {marks[i] === 2 && <Text style={{ fontSize: cell * 0.45, color: colors.muted }}>✕</Text>}
@@ -130,7 +132,7 @@ export default function NonogramaScreen() {
       </View>
 
       <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Dibujo completo en ${formatTime(seconds)}! 🎉`} />}
+        {solved && <Banner text={`¡Dibujo completo en ${formatTime(seconds)}!`} />}
         {solved ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/nonograma')} />
@@ -162,7 +164,17 @@ const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
-  timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
+  timer: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: colors.card,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   colClue: { justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 4 },
   rowClue: { justifyContent: 'center', alignItems: 'flex-end', paddingRight: 6 },
   clue: { fontWeight: '700', color: colors.text, fontVariant: ['tabular-nums'] },
