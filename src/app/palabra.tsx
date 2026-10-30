@@ -30,8 +30,8 @@ const MARK_COLORS: Record<Mark, string> = {
 export default function PalabraScreen() {
   const { width } = useWindowDimensions();
   const { wide, board, panel } = useGameSizes(340);
-  // Five tiles look oversized beyond ~400 px, even on a wide screen.
-  const boardWidth = Math.min(board, 400);
+  // Five tiles look oversized beyond ~400 px on a phone, ~480 px on a desktop.
+  const boardWidth = Math.min(board, wide ? 480 : 400);
   const tile = (boardWidth - (LENGTH - 1) * 6) / LENGTH;
 
   const { daily, date, seed, saveKey } = useDaily('palabra');
