@@ -1,0 +1,26 @@
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { colors } from '@/theme';
+
+export default function RootLayout() {
+  return (
+    <>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.bg },
+          headerShadowVisible: false,
+          headerTintColor: colors.text,
+          headerTitleStyle: { fontWeight: '700' },
+          contentStyle: { backgroundColor: colors.bg },
+        }}
+      >
+        <Stack.Screen name="index" options={{ title: 'Pasaratos' }} />
+        <Stack.Screen name="sudoku" options={{ title: 'Sudoku' }} />
+        <Stack.Screen name="palabra" options={{ title: 'Palabra oculta' }} />
+        <Stack.Screen name="reinas" options={{ title: 'Reinas' }} />
+        <Stack.Screen name="crucigrama" options={{ title: 'Crucigrama' }} />
+      </Stack>
+    </>
+  );
+}
