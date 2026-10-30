@@ -20,6 +20,7 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   colores: { main: '#7048E8', soft: '#E5DBFF', bg: '#F5F1FF' },
   grupos: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
   autodefinido: { main: '#D9480F', soft: '#FFE8CC', bg: '#FFF4E8' },
+  logros: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
 };
 
 export const themeFor = (route: string) => GAME_THEMES[route] ?? DEFAULT;

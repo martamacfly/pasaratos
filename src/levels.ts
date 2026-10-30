@@ -6,12 +6,12 @@ export const LEVEL_COUNT = 20;
 
 const KEY = 'levels';
 /** "game:variant" -> numbers of the completed levels */
-type Progress = Record<string, number[]>;
+export type Progress = Record<string, number[]>;
 
 // Level bars on screen reload when a level is saved as completed.
 const listeners = new Set<() => void>();
 
-async function load(): Promise<Progress> {
+export async function load(): Promise<Progress> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
     return raw ? JSON.parse(raw) : {};

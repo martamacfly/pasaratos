@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { CheckGlyph, CrossGlyph, GameIcon, Glyph } from '@/components/icons';
+import { CheckGlyph, CrossGlyph, GameIcon, Glyph, MedalGlyph } from '@/components/icons';
+import { loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
@@ -24,11 +25,15 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [daily, setDaily] = useState<DailyLog>({});
+  const [medals, setMedals] = useState({ unlocked: 0, total: 0 });
 
   useFocusEffect(
     useCallback(() => {
       loadStats().then(setStats);
       loadDaily().then(setDaily);
+      loadAchievements().then((list) =>
+        setMedals({ unlocked: list.filter((a) => a.unlocked).length, total: list.length }),
+      );
     }, []),
   );
 
@@ -63,6 +68,18 @@ export default function Home() {
               <Text style={styles.tagline}>Pasatiempos para cada rato</Text>
             </View>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/logros')}
+            style={({ pressed }) => [styles.medals, pressed && { opacity: 0.8 }]}
+          >
+            <Glyph size={26}>
+              <MedalGlyph ink="#F2B705" />
+            </Glyph>
+            <Text style={styles.medalsText}>
+              {medals.unlocked}/{medals.total}
+            </Text>
+          </Pressable>
         </View>
       </View>
 
@@ -150,6 +167,17 @@ const styles = StyleSheet.create({
   hero: { paddingBottom: 80, alignItems: 'center', overflow: 'hidden' },
   inner: { alignSelf: 'center' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  medals: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  medalsText: { color: '#fff', fontWeight: '900', fontSize: 15 },
   logo: { width: 60, height: 60, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
   title: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
   tagline: { fontSize: 15, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },

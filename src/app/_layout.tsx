@@ -38,6 +38,7 @@ export default function RootLayout() {
         <Stack.Screen name="colores" options={{ title: 'Conectar colores' }} />
         <Stack.Screen name="grupos" options={{ title: 'Grupos de 4' }} />
         <Stack.Screen name="autodefinido" options={{ title: 'Autodefinido' }} />
+        <Stack.Screen name="logros" options={{ title: 'Logros' }} />
       </Stack>
     </>
   );
