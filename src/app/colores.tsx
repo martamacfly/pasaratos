@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PathLines } from '@/components/PathLines';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { adjacent, type Colores, coloresSolved, generateColores } from '@/games/caminos';
 import { withSeed } from '@/games/random';
 import { useGridDrag } from '@/hooks/useGridDrag';
 import { useTimer } from '@/hooks/useTimer';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -20,7 +22,10 @@ const emptyDrawing = (p: Colores): Drawing => ({ lines: p.pairs.map(() => []), a
 
 export default function ColoresScreen() {
   const { daily, date, seed, saveKey } = useDaily('colores');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generateColores(6)) : generateColores(5)));
+  const [stage, setStage] = useState(1);
+  const [puzzle, setPuzzle] = useState(() =>
+    daily ? withSeed(seed, () => generateColores(6)) : withSeed(levelSeed('colores', 5, 1), () => generateColores(5)),
+  );
   const [drawing, setDrawing] = useState<Drawing>(() => emptyDrawing(puzzle));
   const [finished, setFinished] = useState(false);
   const { n, pairs } = puzzle;
@@ -38,8 +43,9 @@ export default function ColoresScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`colores:${n}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, lines, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, puzzle, lines, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setPuzzle(s.puzzle);
     setDrawing({ lines: s.lines, active: null });
     setSeconds(s.seconds);
@@ -50,11 +56,13 @@ export default function ColoresScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`colores:${n}`, true, seconds);
+    if (!daily) completeLevel('colores', n, stage);
     if (daily) recordDaily('colores', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, n, seconds, daily, stage]);
 
-  function newGame(size: number) {
-    const p = generateColores(size);
+  function newGame(size: number, s = 1) {
+    const p = withSeed(levelSeed('colores', size, s), () => generateColores(size));
+    setStage(s);
     setPuzzle(p);
     setDrawing(emptyDrawing(p));
     setSeconds(0);
@@ -97,6 +105,8 @@ export default function ColoresScreen() {
       }),
   });
 
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+
   if (!loaded) return null;
 
   const owner = new Map<number, number>();
@@ -131,6 +141,7 @@ export default function ColoresScreen() {
             {formatTime(seconds)} · Parejas {joined}/{pairs.length}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="colores" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
       board={
@@ -176,7 +187,7 @@ export default function ColoresScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/colores')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
             <Button label="Borrar líneas" variant="secondary" onPress={() => setDrawing(emptyDrawing(puzzle))} />

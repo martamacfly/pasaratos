@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { keyMarks, type Mark, score } from '@/games/palabra';
 import { pick, withSeed } from '@/games/random';
 import { SOLUTIONS } from '@/games/words';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -33,8 +35,11 @@ export default function PalabraScreen() {
   const tile = (boardWidth - (LENGTH - 1) * 6) / LENGTH;
 
   const { daily, date, seed, saveKey } = useDaily('palabra');
+  const [stage, setStage] = useState(1);
   const [level, setLevel] = useState<Level>('normal');
-  const [answer, setAnswer] = useState(() => (daily ? withSeed(seed, () => pick(SOLUTIONS)) : pick(SOLUTIONS)));
+  const [answer, setAnswer] = useState(() =>
+    daily ? withSeed(seed, () => pick(SOLUTIONS)) : withSeed(levelSeed('palabra', 'normal', 1), () => pick(SOLUTIONS)),
+  );
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState('');
   const [message, setMessage] = useState('');
@@ -46,8 +51,9 @@ export default function PalabraScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats('palabra', finished);
 
-  const loaded = useAutosave(saveKey, { date, level, answer, guesses, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, answer, guesses, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setLevel(s.level ?? 'normal');
     setAnswer(s.answer);
     setGuesses(s.guesses);
@@ -58,8 +64,9 @@ export default function PalabraScreen() {
     if (!loaded || !over || finished) return;
     setFinished(true);
     recordResult('palabra', won);
+    if (!daily) completeLevel('palabra', level, stage);
     if (daily) recordDaily('palabra', won);
-  }, [loaded, over, finished, won, daily]);
+  }, [loaded, over, finished, won, daily, stage]);
 
   function press(key: string) {
     if (over) return;
@@ -76,9 +83,10 @@ export default function PalabraScreen() {
     setCurrent('');
   }
 
-  function restart(l: Level = level) {
+  function restart(l: Level = level, s = 1) {
     setLevel(l);
-    setAnswer(pick(SOLUTIONS));
+    setAnswer(withSeed(levelSeed('palabra', l, s), () => pick(SOLUTIONS)));
+    setStage(s);
     setGuesses([]);
     setCurrent('');
     setMessage('');
@@ -103,6 +111,8 @@ export default function PalabraScreen() {
     if (r === guesses.length && !over) return { word: current, marks: null };
     return { word: '', marks: null };
   });
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -130,6 +140,7 @@ export default function PalabraScreen() {
               Acertadas {stats.won} de {stats.played}
             </Text>
           )}
+          {!daily && <LevelBar game="palabra" variant={level} level={stage} onPick={(s) => restart(level, s)} />}
         </>
       }
       board={
@@ -171,8 +182,8 @@ export default function PalabraScreen() {
 
           {over ? (
             <Button
-              label={daily ? 'Jugar partida libre' : 'Otra palabra'}
-              onPress={daily ? () => router.replace('/palabra') : () => restart()}
+              label={daily ? 'Jugar partida libre' : won ? 'Siguiente nivel' : 'Reintentar nivel'}
+              onPress={daily ? () => router.replace('/palabra') : () => restart(level, won ? nextStage : stage)}
               style={{ width: wide ? panel : boardWidth }}
             />
           ) : (

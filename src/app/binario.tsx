@@ -3,11 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { conflicts, generate, type Grid } from '@/games/binario';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -24,7 +26,10 @@ export default function BinarioScreen() {
   const [level, setLevel] = useState<Level>('medio');
   const [n, setN] = useState(6);
   const { daily, date, seed, saveKey } = useDaily('binario');
-  const [game, setGame] = useState(() => (daily ? withSeed(seed, () => generate(6)) : generate(6)));
+  const [stage, setStage] = useState(1);
+  const [game, setGame] = useState(() =>
+    daily ? withSeed(seed, () => generate(6)) : withSeed(levelSeed('binario', 'medio', 1), () => generate(6)),
+  );
   const [board, setBoard] = useState<Grid>(game.puzzle);
   const [finished, setFinished] = useState(false);
   const { board: size, panel } = useGameSizes(420);
@@ -35,8 +40,9 @@ export default function BinarioScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`binario:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, level, n, game, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, n, game, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setLevel(s.level ?? (s.n === 8 ? 'experto' : 'medio'));
     setN(s.n);
     setGame(s.game);
@@ -49,11 +55,13 @@ export default function BinarioScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`binario:${level}`, true, seconds);
+    if (!daily) completeLevel('binario', level, stage);
     if (daily) recordDaily('binario', true, seconds);
-  }, [loaded, solved, finished, level, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily, stage]);
 
-  function newGame(l: Level) {
-    const g = generate(LEVELS[l].n, LEVELS[l].extra);
+  function newGame(l: Level, s = 1) {
+    const g = withSeed(levelSeed('binario', l, s), () => generate(LEVELS[l].n, LEVELS[l].extra));
+    setStage(s);
     setLevel(l);
     setN(LEVELS[l].n);
     setGame(g);
@@ -66,6 +74,8 @@ export default function BinarioScreen() {
     if (solved || game.puzzle[i]) return;
     setBoard((prev) => prev.map((v, j) => (j === i ? (v + 1) % 3 : v)));
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -96,6 +106,7 @@ export default function BinarioScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="binario" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
       board={
@@ -125,7 +136,7 @@ export default function BinarioScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/binario')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame(level)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(level, nextStage)} />
             )
           ) : (
             <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(game.puzzle)} />

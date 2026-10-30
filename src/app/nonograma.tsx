@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { clues, generate, runs } from '@/games/nonograma';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -17,8 +19,11 @@ type Mark = 0 | 1 | 2; // empty, filled, crossed
 export default function NonogramaScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('nonograma');
+  const [stage, setStage] = useState(1);
   const [n, setN] = useState(daily ? 10 : 5);
-  const [picture, setPicture] = useState(() => (daily ? withSeed(seed, () => generate(10)) : generate(5)));
+  const [picture, setPicture] = useState(() =>
+    daily ? withSeed(seed, () => generate(10)) : withSeed(levelSeed('nonograma', 5, 1), () => generate(5)),
+  );
   const [marks, setMarks] = useState<Mark[]>(() => Array(daily ? 100 : 25).fill(0));
   const [crossMode, setCrossMode] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -35,8 +40,9 @@ export default function NonogramaScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`nonograma:${n}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, n, picture, marks, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, n, picture, marks, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setN(s.n);
     setPicture(s.picture);
     setMarks(s.marks);
@@ -48,12 +54,14 @@ export default function NonogramaScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`nonograma:${n}`, true, seconds);
+    if (!daily) completeLevel('nonograma', n, stage);
     if (daily) recordDaily('nonograma', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, n, seconds, daily, stage]);
 
-  function newGame(size: number) {
+  function newGame(size: number, s = 1) {
     setN(size);
-    setPicture(generate(size));
+    setPicture(withSeed(levelSeed('nonograma', size, s), () => generate(size)));
+    setStage(s);
     setMarks(Array(size * size).fill(0));
     setSeconds(0);
     setFinished(false);
@@ -64,6 +72,8 @@ export default function NonogramaScreen() {
     const target: Mark = crossMode ? 2 : 1;
     setMarks((prev) => prev.map((m, j) => (j === i ? (m === target ? 0 : target) : m)));
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -96,6 +106,7 @@ export default function NonogramaScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="nonograma" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
       board={
@@ -143,7 +154,7 @@ export default function NonogramaScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/nonograma')} />
             ) : (
-              <Button label="Nuevo nonograma" onPress={() => newGame(n)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
             <View style={styles.row}>

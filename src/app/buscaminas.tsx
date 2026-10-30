@@ -3,11 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { FlagGlyph, Glyph, MineGlyph } from '@/components/icons';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { countAround, dailyBoard, flood, type Level, LEVELS, neighbors, placeMines } from '@/games/buscaminas';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -36,7 +38,12 @@ const dailyState = (level: Level): State => {
 
 export default function BuscaminasScreen() {
   const { daily, date, seed, saveKey } = useDaily('buscaminas');
-  const [state, setState] = useState<State>(() => (daily ? withSeed(seed, () => dailyState('medio')) : fresh('facil')));
+  const [stage, setStage] = useState(1);
+  const [state, setState] = useState<State>(() =>
+    daily
+      ? withSeed(seed, () => dailyState('medio'))
+      : withSeed(levelSeed('buscaminas', 'facil', 1), () => dailyState('facil')),
+  );
   const [flagMode, setFlagMode] = useState(false);
   const [finished, setFinished] = useState(false);
   const { level, mines, revealed, flags, lost } = state;
@@ -49,8 +56,9 @@ export default function BuscaminasScreen() {
   const [seconds, setSeconds] = useTimer(mines !== null && !over);
   const stats = useStats(`buscaminas:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, state, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, state, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setState(s.state);
     setSeconds(s.seconds);
     setFinished(s.finished);
@@ -60,11 +68,13 @@ export default function BuscaminasScreen() {
     if (!loaded || !over || finished) return;
     setFinished(true);
     recordResult(`buscaminas:${level}`, won, seconds);
+    if (!daily) completeLevel('buscaminas', level, stage);
     if (daily) recordDaily('buscaminas', won, seconds);
-  }, [loaded, over, finished, level, won, seconds, daily]);
+  }, [loaded, over, finished, level, won, seconds, daily, stage]);
 
-  function newGame(l: Level) {
-    setState(fresh(l));
+  function newGame(l: Level, s = 1) {
+    setState(withSeed(levelSeed('buscaminas', l, s), () => dailyState(l)));
+    setStage(s);
     setSeconds(0);
     setFinished(false);
   }
@@ -104,6 +114,8 @@ export default function BuscaminasScreen() {
     });
   }
 
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+
   if (!loaded) return null;
 
   const flagsLeft = mineCount - flags.filter(Boolean).length;
@@ -131,6 +143,7 @@ export default function BuscaminasScreen() {
             {formatTime(seconds)} · Minas {flagsLeft}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="buscaminas" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
       board={
@@ -174,7 +187,10 @@ export default function BuscaminasScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />
             ) : (
-              <Button label="Otra partida" onPress={() => newGame(level)} />
+              <Button
+                label={won ? 'Siguiente nivel' : 'Reintentar nivel'}
+                onPress={() => newGame(level, won ? nextStage : stage)}
+              />
             )
           ) : (
             <Button

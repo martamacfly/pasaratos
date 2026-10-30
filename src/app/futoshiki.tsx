@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -9,6 +10,7 @@ import { generate, ineqConflicts } from '@/games/futoshiki';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -24,8 +26,13 @@ const create = (l: Level) => generate(LEVELS[l].n, LEVELS[l].extraSigns);
 export default function FutoshikiScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('futoshiki');
+  const [stage, setStage] = useState(1);
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'medio');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('medio')));
+  const [puzzle, setPuzzle] = useState(() =>
+    daily
+      ? withSeed(seed, () => create('dificil'))
+      : withSeed(levelSeed('futoshiki', 'medio', 1), () => create('medio')),
+  );
   const [board, setBoard] = useState<number[]>(puzzle.givens);
   const [selected, setSelected] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
@@ -41,8 +48,9 @@ export default function FutoshikiScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`futoshiki:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, level, puzzle, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, puzzle, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setLevel(s.level ?? 'dificil');
     setPuzzle(s.puzzle);
     setBoard(s.board);
@@ -54,11 +62,13 @@ export default function FutoshikiScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`futoshiki:${level}`, true, seconds);
+    if (!daily) completeLevel('futoshiki', level, stage);
     if (daily) recordDaily('futoshiki', true, seconds);
-  }, [loaded, solved, finished, level, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily, stage]);
 
-  function newGame(l: Level = level) {
-    const p = create(l);
+  function newGame(l: Level = level, s = 1) {
+    const p = withSeed(levelSeed('futoshiki', l, s), () => create(l));
+    setStage(s);
     setLevel(l);
     setPuzzle(p);
     setBoard(p.givens);
@@ -71,6 +81,8 @@ export default function FutoshikiScreen() {
     if (selected === null || givens[selected] || solved) return;
     setBoard((prev) => prev.map((x, i) => (i === selected ? v : x)));
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -107,6 +119,7 @@ export default function FutoshikiScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="futoshiki" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
       board={
@@ -174,7 +187,7 @@ export default function FutoshikiScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/futoshiki')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame()} />
+              <Button label="Siguiente nivel" onPress={() => newGame(level, nextStage)} />
             )
           ) : (
             <NumberPad max={n} onPress={input} width={panel} />

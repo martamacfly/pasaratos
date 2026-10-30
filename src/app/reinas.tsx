@@ -3,11 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { CrownGlyph, Glyph } from '@/components/icons';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { type CellState, conflicts, generate } from '@/games/reinas';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -28,7 +30,10 @@ const emptyBoard = (n: number): CellState[][] => Array.from({ length: n }, () =>
 
 export default function ReinasScreen() {
   const { daily, date, seed, saveKey } = useDaily('reinas');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate(7)) : generate(7)));
+  const [stage, setStage] = useState(1);
+  const [puzzle, setPuzzle] = useState(() =>
+    daily ? withSeed(seed, () => generate(7)) : withSeed(levelSeed('reinas', 7, 1), () => generate(7)),
+  );
   const [board, setBoard] = useState(() => emptyBoard(7));
   const { n, regions } = puzzle;
   const { board: size, panel } = useGameSizes(460);
@@ -41,8 +46,9 @@ export default function ReinasScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats(`reinas:${n}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, puzzle, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setPuzzle(s.puzzle);
     setBoard(s.board);
     setSeconds(s.seconds);
@@ -53,15 +59,19 @@ export default function ReinasScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`reinas:${n}`, true, seconds);
+    if (!daily) completeLevel('reinas', n, stage);
     if (daily) recordDaily('reinas', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, n, seconds, daily, stage]);
 
-  function newGame(size: number) {
-    setPuzzle(generate(size));
+  function newGame(size: number, s = 1) {
+    setPuzzle(withSeed(levelSeed('reinas', size, s), () => generate(size)));
+    setStage(s);
     setBoard(emptyBoard(size));
     setSeconds(0);
     setFinished(false);
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -103,6 +113,7 @@ export default function ReinasScreen() {
             {formatTime(seconds)} · Reinas {queens}/{n}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="reinas" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
       board={
@@ -143,7 +154,7 @@ export default function ReinasScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/reinas')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
             <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(emptyBoard(n))} />

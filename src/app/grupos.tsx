@@ -2,11 +2,13 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { groupOf, PUZZLES } from '@/games/grupos';
 import { random, shuffle, withSeed } from '@/games/random';
+import { completeLevel, LEVEL_COUNT } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -22,10 +24,9 @@ function deal(index: number) {
 export default function GruposScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('grupos');
+  const [stage, setStage] = useState(1);
   const [game, setGame] = useState(() =>
-    daily
-      ? withSeed(seed, () => deal(Math.floor(random() * PUZZLES.length)))
-      : deal(Math.floor(Math.random() * PUZZLES.length)),
+    daily ? withSeed(seed, () => deal(Math.floor(random() * PUZZLES.length))) : deal(0),
   );
   const [found, setFound] = useState<number[]>([]); // group indices, in the order they were solved
   const [mistakes, setMistakes] = useState(0);
@@ -42,8 +43,9 @@ export default function GruposScreen() {
   const over = won || lost;
   const stats = useStats('grupos', finished);
 
-  const loaded = useAutosave(saveKey, { date, game, found, mistakes, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, game, found, mistakes, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setGame(s.game);
     setFound(s.found);
     setMistakes(s.mistakes);
@@ -54,13 +56,13 @@ export default function GruposScreen() {
     if (!loaded || !over || finished) return;
     setFinished(true);
     recordResult('grupos', won);
+    if (!daily) completeLevel('grupos', 'todos', stage);
     if (daily) recordDaily('grupos', won);
-  }, [loaded, over, finished, won, daily]);
+  }, [loaded, over, finished, won, daily, stage]);
 
-  function newGame() {
-    let next = game.index;
-    while (PUZZLES.length > 1 && next === game.index) next = Math.floor(Math.random() * PUZZLES.length);
-    setGame(deal(next));
+  function newGame(s = 1) {
+    setGame(deal(s - 1));
+    setStage(s);
     setFound([]);
     setMistakes(0);
     setSelected([]);
@@ -87,6 +89,8 @@ export default function GruposScreen() {
     setMessage(most === 3 ? '¡Casi! Te falta una' : 'No es un grupo');
   }
 
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+
   if (!loaded) return null;
 
   // When the game is lost, the missing groups are revealed too.
@@ -104,6 +108,7 @@ export default function GruposScreen() {
               Ganadas {stats.won} de {stats.played}
             </Text>
           )}
+          {!daily && <LevelBar game="grupos" variant={'todos'} level={stage} onPick={(s) => newGame(s)} />}
         </>
       }
       board={
@@ -161,7 +166,10 @@ export default function GruposScreen() {
               daily ? (
                 <Button label="Jugar partida libre" onPress={() => router.replace('/grupos')} />
               ) : (
-                <Button label="Otra partida" onPress={newGame} />
+                <Button
+                  label={won ? 'Siguiente nivel' : 'Reintentar nivel'}
+                  onPress={() => newGame(won ? nextStage : stage)}
+                />
               )
             ) : (
               <View style={styles.row}>

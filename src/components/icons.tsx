@@ -77,6 +77,15 @@ export function FlagGlyph({ ink }: GlyphProps) {
   );
 }
 
+export function LockGlyph({ ink }: GlyphProps) {
+  return (
+    <G>
+      <Path d="M32 46 V34 A18 18 0 0 1 68 34 V46" fill="none" stroke={ink} strokeWidth={9} />
+      <Rect x={22} y={44} width={56} height={42} rx={8} fill={ink} />
+    </G>
+  );
+}
+
 export function CheckGlyph({ ink }: GlyphProps) {
   return <Path d="M20 52 L42 74 L82 28" fill="none" stroke={ink} strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" />;
 }

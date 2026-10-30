@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { generate, lineBetween } from '@/games/sopa';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -25,8 +27,11 @@ const create = (l: Level) => generate(LEVELS[l].size, LEVELS[l].words, LEVELS[l]
 export default function SopaScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('sopa');
+  const [stage, setStage] = useState(1);
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'facil');
-  const [sopa, setSopa] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('facil')));
+  const [sopa, setSopa] = useState(() =>
+    daily ? withSeed(seed, () => create('dificil')) : withSeed(levelSeed('sopa', 'facil', 1), () => create('facil')),
+  );
   const [found, setFound] = useState<string[]>([]);
   const [start, setStart] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
@@ -38,8 +43,9 @@ export default function SopaScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`sopa:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, level, sopa, found, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, sopa, found, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setLevel(s.level);
     setSopa(s.sopa);
     setFound(s.found);
@@ -51,12 +57,14 @@ export default function SopaScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`sopa:${level}`, true, seconds);
+    if (!daily) completeLevel('sopa', level, stage);
     if (daily) recordDaily('sopa', true, seconds);
-  }, [loaded, solved, finished, level, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily, stage]);
 
-  function newGame(l: Level) {
+  function newGame(l: Level, s = 1) {
     setLevel(l);
-    setSopa(create(l));
+    setSopa(withSeed(levelSeed('sopa', l, s), () => create(l)));
+    setStage(s);
     setFound([]);
     setStart(null);
     setSeconds(0);
@@ -81,6 +89,8 @@ export default function SopaScreen() {
       setStart(i);
     }
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -117,6 +127,7 @@ export default function SopaScreen() {
             {formatTime(seconds)} · {found.length}/{words.length}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="sopa" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
       board={
@@ -155,7 +166,11 @@ export default function SopaScreen() {
           {daily ? (
             solved && <Button label="Jugar partida libre" onPress={() => router.replace('/sopa')} />
           ) : (
-            <Button label="Nueva sopa" variant={solved ? 'primary' : 'secondary'} onPress={() => newGame(level)} />
+            <Button
+              label={solved ? 'Siguiente nivel' : 'Reiniciar nivel'}
+              variant={solved ? 'primary' : 'secondary'}
+              onPress={() => newGame(level, solved ? nextStage : stage)}
+            />
           )}
         </View>
       }

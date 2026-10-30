@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { type Board, conflicts, type Difficulty, generate, sameUnit } from '@/games/sudoku';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -22,8 +24,13 @@ export default function SudokuScreen() {
   const cell = size / 9;
 
   const { daily, date, seed, saveKey } = useDaily('sudoku');
+  const [stage, setStage] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty>(daily ? 'medio' : 'facil');
-  const [game, setGame] = useState(() => (daily ? withSeed(seed, () => generate('medio')) : generate('facil')));
+  const [game, setGame] = useState(() =>
+    daily
+      ? withSeed(seed, () => generate('medio'))
+      : withSeed(levelSeed('sudoku', 'facil', 1), () => generate('facil')),
+  );
   const [board, setBoard] = useState<Board>(game.puzzle);
   // Pencil marks per cell, as a bitmask of digits 1-9.
   const [notes, setNotes] = useState<number[]>(() => Array(81).fill(0));
@@ -37,8 +44,9 @@ export default function SudokuScreen() {
   const bad = useMemo(() => conflicts(board), [board]);
   const stats = useStats(`sudoku:${difficulty}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, difficulty, game, board, notes, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, difficulty, game, board, notes, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setDifficulty(s.difficulty);
     setGame(s.game);
     setBoard(s.board);
@@ -51,11 +59,13 @@ export default function SudokuScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`sudoku:${difficulty}`, true, seconds);
+    if (!daily) completeLevel('sudoku', difficulty, stage);
     if (daily) recordDaily('sudoku', true, seconds);
-  }, [loaded, solved, finished, difficulty, seconds, daily]);
+  }, [loaded, solved, finished, difficulty, seconds, daily, stage]);
 
-  function newGame(d: Difficulty) {
-    const g = generate(d);
+  function newGame(d: Difficulty, s = 1) {
+    const g = withSeed(levelSeed('sudoku', d, s), () => generate(d));
+    setStage(s);
     setDifficulty(d);
     setGame(g);
     setBoard(g.puzzle);
@@ -64,6 +74,8 @@ export default function SudokuScreen() {
     setSeconds(0);
     setFinished(false);
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -105,6 +117,9 @@ export default function SudokuScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && (
+            <LevelBar game="sudoku" variant={difficulty} level={stage} onPick={(s) => newGame(difficulty, s)} />
+          )}
         </>
       }
       board={
@@ -164,7 +179,7 @@ export default function SudokuScreen() {
             {daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/sudoku')} />
             ) : (
-              <Button label="Nueva partida" onPress={() => newGame(difficulty)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(difficulty, nextStage)} />
             )}
           </View>
         ) : (

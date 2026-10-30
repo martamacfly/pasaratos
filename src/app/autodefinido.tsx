@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -9,6 +10,7 @@ import { type Autodefinido, cellsOf, generate } from '@/games/autodefinido';
 import type { Dir, Entry } from '@/games/crucigrama';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -19,7 +21,10 @@ export default function AutodefinidoScreen() {
   const { width } = useWindowDimensions();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('autodefinido');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate()) : generate()));
+  const [stage, setStage] = useState(1);
+  const [puzzle, setPuzzle] = useState(() =>
+    daily ? withSeed(seed, () => generate()) : withSeed(levelSeed('autodefinido', 'normal', 1), () => generate()),
+  );
   const { cols, cells, entries } = puzzle;
   const [letters, setLetters] = useState<string[][]>(() => emptyLetters(puzzle));
   const [active, setActive] = useState(0); // index into entries
@@ -35,8 +40,9 @@ export default function AutodefinidoScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats('autodefinido', finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, letters, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, puzzle, letters, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setPuzzle(s.puzzle);
     setLetters(s.letters);
     setActive(0);
@@ -49,11 +55,13 @@ export default function AutodefinidoScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult('autodefinido', true, seconds);
+    if (!daily) completeLevel('autodefinido', 'normal', stage);
     if (daily) recordDaily('autodefinido', true, seconds);
-  }, [loaded, solved, finished, seconds, daily]);
+  }, [loaded, solved, finished, seconds, daily, stage]);
 
-  function newGame() {
-    const p = generate();
+  function newGame(s = 1) {
+    const p = withSeed(levelSeed('autodefinido', 'normal', s), () => generate());
+    setStage(s);
     setPuzzle(p);
     setLetters(emptyLetters(p));
     setActive(0);
@@ -131,6 +139,8 @@ export default function AutodefinidoScreen() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+
   if (!loaded) return null;
 
   return (
@@ -142,6 +152,7 @@ export default function AutodefinidoScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="autodefinido" variant={'normal'} level={stage} onPick={(s) => newGame(s)} />}
         </>
       }
       board={
@@ -221,7 +232,7 @@ export default function AutodefinidoScreen() {
               {daily ? (
                 <Button label="Jugar partida libre" onPress={() => router.replace('/autodefinido')} />
               ) : (
-                <Button label="Nuevo autodefinido" onPress={newGame} />
+                <Button label="Siguiente nivel" onPress={() => newGame(nextStage)} />
               )}
             </View>
           ) : (
@@ -255,7 +266,12 @@ export default function AutodefinidoScreen() {
                 <Button label="Revelar letra" variant="secondary" onPress={reveal} style={{ flex: 1 }} />
               </View>
               {!daily && (
-                <Button label="Nuevo autodefinido" variant="secondary" onPress={newGame} style={{ width: panel }} />
+                <Button
+                  label="Reiniciar nivel"
+                  variant="secondary"
+                  onPress={() => newGame(stage)}
+                  style={{ width: panel }}
+                />
               )}
             </>
           )}

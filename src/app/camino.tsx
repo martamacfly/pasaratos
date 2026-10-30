@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PathLines } from '@/components/PathLines';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -10,6 +11,7 @@ import { adjacent, caminoSolved, generateCamino } from '@/games/caminos';
 import { withSeed } from '@/games/random';
 import { useGridDrag } from '@/hooks/useGridDrag';
 import { useTimer } from '@/hooks/useTimer';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -18,7 +20,10 @@ const SIZES = [5, 6, 7, 8];
 export default function CaminoScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('camino');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generateCamino(7)) : generateCamino(6)));
+  const [stage, setStage] = useState(1);
+  const [puzzle, setPuzzle] = useState(() =>
+    daily ? withSeed(seed, () => generateCamino(7)) : withSeed(levelSeed('camino', 6, 1), () => generateCamino(6)),
+  );
   const [path, setPath] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
   const { n, clues } = puzzle;
@@ -30,8 +35,9 @@ export default function CaminoScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`camino:${n}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, path, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, puzzle, path, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setPuzzle(s.puzzle);
     setPath(s.path);
     setSeconds(s.seconds);
@@ -42,11 +48,13 @@ export default function CaminoScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`camino:${n}`, true, seconds);
+    if (!daily) completeLevel('camino', n, stage);
     if (daily) recordDaily('camino', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, n, seconds, daily, stage]);
 
-  function newGame(size: number) {
-    setPuzzle(generateCamino(size));
+  function newGame(size: number, s = 1) {
+    setPuzzle(withSeed(levelSeed('camino', size, s), () => generateCamino(size)));
+    setStage(s);
     setPath([]);
     setSeconds(0);
     setFinished(false);
@@ -80,6 +88,8 @@ export default function CaminoScreen() {
       }),
   });
 
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+
   if (!loaded) return null;
 
   const onPath = new Set(path);
@@ -112,6 +122,7 @@ export default function CaminoScreen() {
             {formatTime(seconds)} · {path.length}/{n * n}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="camino" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
       board={
@@ -160,7 +171,7 @@ export default function CaminoScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/camino')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
             <Button label="Borrar camino" variant="secondary" onPress={() => setPath([])} />

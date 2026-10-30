@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
+import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -9,6 +10,7 @@ import { cageConflicts, generate } from '@/games/calcudoku';
 import { latinConflicts } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
+import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -17,7 +19,10 @@ const SIZES = [4, 5, 6, 7];
 export default function CalcudokuScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('calcudoku');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate(5)) : generate(4)));
+  const [stage, setStage] = useState(1);
+  const [puzzle, setPuzzle] = useState(() =>
+    daily ? withSeed(seed, () => generate(5)) : withSeed(levelSeed('calcudoku', 4, 1), () => generate(4)),
+  );
   const { n, cages, solution } = puzzle;
   const [board, setBoard] = useState<number[]>(() => Array(n * n).fill(0));
   const [selected, setSelected] = useState<number | null>(null);
@@ -35,8 +40,9 @@ export default function CalcudokuScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`calcudoku:${n}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, puzzle, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setStage(s.stage ?? 1);
     setPuzzle(s.puzzle);
     setBoard(s.board);
     setSeconds(s.seconds);
@@ -47,11 +53,13 @@ export default function CalcudokuScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`calcudoku:${n}`, true, seconds);
+    if (!daily) completeLevel('calcudoku', n, stage);
     if (daily) recordDaily('calcudoku', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, n, seconds, daily, stage]);
 
-  function newGame(size: number) {
-    setPuzzle(generate(size));
+  function newGame(size: number, s = 1) {
+    setPuzzle(withSeed(levelSeed('calcudoku', size, s), () => generate(size)));
+    setStage(s);
     setBoard(Array(size * size).fill(0));
     setSelected(null);
     setSeconds(0);
@@ -62,6 +70,8 @@ export default function CalcudokuScreen() {
     if (selected === null || solved) return;
     setBoard((prev) => prev.map((x, i) => (i === selected ? v : x)));
   }
+
+  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
 
@@ -117,6 +127,7 @@ export default function CalcudokuScreen() {
             {formatTime(seconds)}
             {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
           </Text>
+          {!daily && <LevelBar game="calcudoku" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
       board={
@@ -154,7 +165,7 @@ export default function CalcudokuScreen() {
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/calcudoku')} />
             ) : (
-              <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+              <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
             <NumberPad max={n} onPress={input} width={panel} />
