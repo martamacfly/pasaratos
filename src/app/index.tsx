@@ -71,7 +71,8 @@ export default function Home() {
   const doneToday = Object.keys(today).length;
   const days = streak(daily);
 
-  const content = Math.min(width, MAX_WIDTH) - 32;
+  // The web build's pre-rendered page starts with width 0, so keep sizes from going negative.
+  const content = Math.max(Math.min(width, MAX_WIDTH) - 32, 280);
   const columns = content < 560 ? 2 : content < 820 ? 3 : 4;
   const cardWidth = (content - (columns - 1) * 12) / columns;
   const dailyPerRow = content < 560 ? 6 : 12;
