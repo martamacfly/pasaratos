@@ -11,7 +11,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
-const SIZES = [5, 6, 7];
+const SIZES = [5, 6, 7, 8];
 
 export default function CaminoScreen() {
   const { width } = useWindowDimensions();

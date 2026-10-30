@@ -13,6 +13,7 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'facil', label: 'Fácil' },
   { key: 'medio', label: 'Medio' },
   { key: 'dificil', label: 'Difícil' },
+  { key: 'experto', label: 'Experto' },
 ];
 
 export default function SudokuScreen() {

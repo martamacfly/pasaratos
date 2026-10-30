@@ -1,10 +1,11 @@
 import { random, shuffle } from './random';
 
-export type Level = 'facil' | 'medio' | 'dificil';
+export type Level = 'facil' | 'medio' | 'dificil' | 'experto';
 export const LEVELS: Record<Level, { size: number; mines: number; label: string }> = {
   facil: { size: 9, mines: 10, label: 'Fácil' },
   medio: { size: 12, mines: 24, label: 'Medio' },
   dificil: { size: 14, mines: 40, label: 'Difícil' },
+  experto: { size: 16, mines: 56, label: 'Experto' },
 };
 
 export function neighbors(i: number, size: number): number[] {

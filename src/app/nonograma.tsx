@@ -9,7 +9,7 @@ import { clues, generate, runs } from '@/games/nonograma';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
-const SIZES = [5, 10];
+const SIZES = [5, 8, 10, 12];
 type Mark = 0 | 1 | 2; // empty, filled, crossed
 
 export default function NonogramaScreen() {

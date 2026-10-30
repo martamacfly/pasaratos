@@ -51,7 +51,8 @@ function solve(g: Grid, n: number, limit: number, randomize = false): number {
   return count;
 }
 
-export function generate(n: number): { puzzle: Grid; solution: Grid } {
+/** Minimal puzzle with a unique solution; `extra` hands back that many solved cells to make it easier. */
+export function generate(n: number, extra = 0): { puzzle: Grid; solution: Grid } {
   const solution: Grid = Array(n * n).fill(0);
   solve(solution, n, 1, true);
   const puzzle = [...solution];
@@ -60,6 +61,7 @@ export function generate(n: number): { puzzle: Grid; solution: Grid } {
     puzzle[i] = 0;
     if (solve([...puzzle], n, 2) !== 1) puzzle[i] = saved;
   }
+  for (const i of shuffle([...puzzle.keys()].filter((i) => !puzzle[i])).slice(0, extra)) puzzle[i] = solution[i];
   return { puzzle, solution };
 }
 

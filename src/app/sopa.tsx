@@ -9,10 +9,12 @@ import { generate, lineBetween } from '@/games/sopa';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
-type Level = 'facil' | 'dificil';
+type Level = 'facil' | 'medio' | 'dificil' | 'experto';
 const LEVELS: Record<Level, { size: number; words: number; backwards: boolean; label: string }> = {
   facil: { size: 10, words: 8, backwards: false, label: 'Fácil' },
+  medio: { size: 11, words: 10, backwards: false, label: 'Medio' },
   dificil: { size: 12, words: 12, backwards: true, label: 'Difícil' },
+  experto: { size: 14, words: 16, backwards: true, label: 'Experto' },
 };
 const FOUND_COLORS = ['#FFC9C9', '#FFD8A8', '#FFEC99', '#C0EB75', '#96F2D7', '#A5D8FF', '#D0BFFF', '#FCC2D7'];
 

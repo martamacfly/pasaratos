@@ -10,10 +10,18 @@ import { conflicts, generate, type Grid } from '@/games/binario';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
-const SIZES = [6, 8];
+type Level = 'facil' | 'medio' | 'dificil' | 'experto';
+// Easier levels hand back some solved cells on top of the minimal puzzle.
+const LEVELS: Record<Level, { n: number; extra: number; label: string }> = {
+  facil: { n: 6, extra: 6, label: 'Fácil' },
+  medio: { n: 6, extra: 0, label: 'Medio' },
+  dificil: { n: 8, extra: 8, label: 'Difícil' },
+  experto: { n: 8, extra: 0, label: 'Experto' },
+};
 
 export default function BinarioScreen() {
   const { width } = useWindowDimensions();
+  const [level, setLevel] = useState<Level>('medio');
   const [n, setN] = useState(6);
   const { daily, date, seed, saveKey } = useDaily('binario');
   const [game, setGame] = useState(() => (daily ? withSeed(seed, () => generate(6)) : generate(6)));
@@ -25,10 +33,11 @@ export default function BinarioScreen() {
   const bad = useMemo(() => conflicts(board, n), [board, n]);
   const solved = board.every((v, i) => v === game.solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
-  const stats = useStats(`binario:${n}`, finished);
+  const stats = useStats(`binario:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, n, game, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, level, n, game, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setLevel(s.level ?? (s.n === 8 ? 'experto' : 'medio'));
     setN(s.n);
     setGame(s.game);
     setBoard(s.board);
@@ -39,13 +48,14 @@ export default function BinarioScreen() {
   useEffect(() => {
     if (!loaded || !solved || finished) return;
     setFinished(true);
-    recordResult(`binario:${n}`, true, seconds);
+    recordResult(`binario:${level}`, true, seconds);
     if (daily) recordDaily('binario', true, seconds);
-  }, [loaded, solved, finished, n, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily]);
 
-  function newGame(size: number) {
-    const g = generate(size);
-    setN(size);
+  function newGame(l: Level) {
+    const g = generate(LEVELS[l].n, LEVELS[l].extra);
+    setLevel(l);
+    setN(LEVELS[l].n);
     setGame(g);
     setBoard(g.puzzle);
     setSeconds(0);
@@ -65,12 +75,12 @@ export default function BinarioScreen() {
         <DailyHeader />
       ) : (
         <View style={styles.row}>
-          {SIZES.map((s) => (
+          {(Object.keys(LEVELS) as Level[]).map((l) => (
             <Button
-              key={s}
-              label={`${s}×${s}`}
-              variant={s === n ? 'primary' : 'secondary'}
-              onPress={() => newGame(s)}
+              key={l}
+              label={LEVELS[l].label}
+              variant={l === level ? 'primary' : 'secondary'}
+              onPress={() => newGame(l)}
               style={{ flex: 1 }}
             />
           ))}
@@ -108,7 +118,7 @@ export default function BinarioScreen() {
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/binario')} />
           ) : (
-            <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+            <Button label="Nuevo tablero" onPress={() => newGame(level)} />
           )
         ) : (
           <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(game.puzzle)} />

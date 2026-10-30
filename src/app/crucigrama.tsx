@@ -11,10 +11,19 @@ import { colors, radius } from '@/theme';
 
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 
+type Level = 'mini' | 'normal' | 'grande';
+const LEVELS: Record<Level, { words: number; maxSize: number; label: string }> = {
+  mini: { words: 6, maxSize: 8, label: 'Mini' },
+  normal: { words: 10, maxSize: 11, label: 'Normal' },
+  grande: { words: 16, maxSize: 13, label: 'Grande' },
+};
+const create = (l: Level) => generate(LEVELS[l].words, LEVELS[l].maxSize);
+
 export default function CrucigramaScreen() {
   const { width } = useWindowDimensions();
   const { daily, date, seed, saveKey } = useDaily('crucigrama');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, generate) : generate()));
+  const [level, setLevel] = useState<Level>('normal');
+  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('normal')) : create('normal')));
   const { rows, cols, grid, entries } = puzzle;
   const [letters, setLetters] = useState<string[][]>(() => grid.map((r) => r.map(() => '')));
   const [pos, setPos] = useState<[number, number]>([entries[0].row, entries[0].col]);
@@ -27,10 +36,11 @@ export default function CrucigramaScreen() {
   const solved = grid.every((row, r) => row.every((l, c) => l === null || letters[r][c] === l));
   const [seconds, setSeconds] = useTimer(!solved);
   const [finished, setFinished] = useState(false);
-  const stats = useStats('crucigrama', finished);
+  const stats = useStats(`crucigrama:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, letters, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, level, puzzle, letters, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setLevel(s.level ?? 'normal');
     setPuzzle(s.puzzle);
     setLetters(s.letters);
     setPos([s.puzzle.entries[0].row, s.puzzle.entries[0].col]);
@@ -42,17 +52,18 @@ export default function CrucigramaScreen() {
   useEffect(() => {
     if (!loaded || !solved || finished) return;
     setFinished(true);
-    recordResult('crucigrama', true, seconds);
+    recordResult(`crucigrama:${level}`, true, seconds);
     if (daily) recordDaily('crucigrama', true, seconds);
-  }, [loaded, solved, finished, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily]);
 
   const entryAt = (r: number, c: number, d: Dir) =>
     entries.find((e) => e.dir === d && cellsOf(e).some(([er, ec]) => er === r && ec === c));
   const active = entryAt(pos[0], pos[1], dir) ?? entryAt(pos[0], pos[1], dir === 'across' ? 'down' : 'across')!;
   const activeCells = new Set(cellsOf(active).map(([r, c]) => `${r},${c}`));
 
-  function newGame() {
-    const p = generate();
+  function newGame(l: Level = level) {
+    const p = create(l);
+    setLevel(l);
     setPuzzle(p);
     setLetters(p.grid.map((r) => r.map(() => '')));
     setPos([p.entries[0].row, p.entries[0].col]);
@@ -120,7 +131,21 @@ export default function CrucigramaScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {daily && <DailyHeader />}
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.levels}>
+          {(Object.keys(LEVELS) as Level[]).map((l) => (
+            <Button
+              key={l}
+              label={LEVELS[l].label}
+              variant={l === level ? 'primary' : 'secondary'}
+              onPress={() => newGame(l)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.timer}>
         ⏱ {formatTime(seconds)}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
@@ -165,7 +190,7 @@ export default function CrucigramaScreen() {
           {daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/crucigrama')} />
           ) : (
-            <Button label="Nuevo crucigrama" onPress={newGame} />
+            <Button label="Nuevo crucigrama" onPress={() => newGame()} />
           )}
         </View>
       ) : (
@@ -219,7 +244,7 @@ export default function CrucigramaScreen() {
             })}
           </View>
         ))}
-        {!solved && !daily && <Button label="Nuevo crucigrama" variant="secondary" onPress={newGame} />}
+        {!solved && !daily && <Button label="Nuevo crucigrama" variant="secondary" onPress={() => newGame()} />}
       </View>
     </ScrollView>
   );
@@ -227,6 +252,7 @@ export default function CrucigramaScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
+  levels: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
   cell: {
     borderWidth: 0.5,

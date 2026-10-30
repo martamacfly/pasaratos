@@ -10,7 +10,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
-const SIZES = [4, 5, 6];
+const SIZES = [4, 5, 6, 7];
 
 export default function CalcudokuScreen() {
   const { width } = useWindowDimensions();

@@ -11,7 +11,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
-const SIZES = [5, 6, 7];
+const SIZES = [5, 6, 7, 8, 9];
 const PALETTE = ['#E03131', '#1971C2', '#2F9E44', '#F08C00', '#9C36B5', '#0C8599', '#D6336C', '#5C940D'];
 
 type Drawing = { lines: number[][]; active: number | null };

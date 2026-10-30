@@ -10,12 +10,20 @@ import { useTimer } from '@/hooks/useTimer';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
-const N = 5;
+type Level = 'facil' | 'medio' | 'dificil';
+// 6×6 takes seconds to generate, so the hardest level is a 5×5 with the fewest signs possible.
+const LEVELS: Record<Level, { n: number; extraSigns: number; label: string }> = {
+  facil: { n: 4, extraSigns: 2, label: 'Fácil' },
+  medio: { n: 5, extraSigns: 5, label: 'Medio' },
+  dificil: { n: 5, extraSigns: 0, label: 'Difícil' },
+};
+const create = (l: Level) => generate(LEVELS[l].n, LEVELS[l].extraSigns);
 
 export default function FutoshikiScreen() {
   const { width } = useWindowDimensions();
   const { daily, date, seed, saveKey } = useDaily('futoshiki');
-  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate(N)) : generate(N)));
+  const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'medio');
+  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('medio')));
   const [board, setBoard] = useState<number[]>(puzzle.givens);
   const [selected, setSelected] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
@@ -29,10 +37,11 @@ export default function FutoshikiScreen() {
   const bad = useMemo(() => new Set([...latinConflicts(board, n), ...ineqConflicts(board, ineqs)]), [board, n, ineqs]);
   const solved = board.every((v, i) => v === solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
-  const stats = useStats('futoshiki', finished);
+  const stats = useStats(`futoshiki:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, puzzle, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, level, puzzle, board, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
+    setLevel(s.level ?? 'dificil');
     setPuzzle(s.puzzle);
     setBoard(s.board);
     setSeconds(s.seconds);
@@ -42,12 +51,13 @@ export default function FutoshikiScreen() {
   useEffect(() => {
     if (!loaded || !solved || finished) return;
     setFinished(true);
-    recordResult('futoshiki', true, seconds);
+    recordResult(`futoshiki:${level}`, true, seconds);
     if (daily) recordDaily('futoshiki', true, seconds);
-  }, [loaded, solved, finished, seconds, daily]);
+  }, [loaded, solved, finished, level, seconds, daily]);
 
-  function newGame() {
-    const p = generate(N);
+  function newGame(l: Level = level) {
+    const p = create(l);
+    setLevel(l);
     setPuzzle(p);
     setBoard(p.givens);
     setSelected(null);
@@ -71,7 +81,21 @@ export default function FutoshikiScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {daily && <DailyHeader />}
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {(Object.keys(LEVELS) as Level[]).map((l) => (
+            <Button
+              key={l}
+              label={LEVELS[l].label}
+              variant={l === level ? 'primary' : 'secondary'}
+              onPress={() => newGame(l)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.help}>
         Rellena con números del 1 al {n} sin repetir en filas ni columnas, respetando los signos {'<'} y {'>'}.
       </Text>
@@ -135,12 +159,11 @@ export default function FutoshikiScreen() {
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/futoshiki')} />
           ) : (
-            <Button label="Nuevo tablero" onPress={newGame} />
+            <Button label="Nuevo tablero" onPress={() => newGame()} />
           )
         ) : (
           <NumberPad max={n} onPress={input} width={boardSize} />
         )}
-        {!solved && !daily && <Button label="Nuevo tablero" variant="secondary" onPress={newGame} />}
       </View>
     </ScrollView>
   );
@@ -148,6 +171,7 @@ export default function FutoshikiScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, alignItems: 'center' },
+  row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   timer: { fontSize: 16, color: colors.muted, fontVariant: ['tabular-nums'] },
   cell: {

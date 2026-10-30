@@ -2,9 +2,9 @@ import { shuffle } from './random';
 
 /** Board of 81 cells, row-major. 0 = empty. */
 export type Board = number[];
-export type Difficulty = 'facil' | 'medio' | 'dificil';
+export type Difficulty = 'facil' | 'medio' | 'dificil' | 'experto';
 
-const CLUES: Record<Difficulty, number> = { facil: 40, medio: 32, dificil: 26 };
+const CLUES: Record<Difficulty, number> = { facil: 40, medio: 32, dificil: 26, experto: 22 };
 
 const row = (i: number) => Math.floor(i / 9);
 const col = (i: number) => i % 9;

@@ -32,7 +32,8 @@ function count(n: number, givens: number[], ineqs: Ineq[], limit = 2): number {
   return found;
 }
 
-export function generate(n: number): Futoshiki {
+/** Minimal puzzle with a unique solution; `extraSigns` adds back that many inequalities to make it easier. */
+export function generate(n: number, extraSigns = 0): Futoshiki {
   const solution = latinSquare(n);
   const all: Ineq[] = [];
   for (let i = 0; i < n * n; i++) {
@@ -59,6 +60,8 @@ export function generate(n: number): Futoshiki {
     givens[i] = 0;
     if (count(n, givens, ineqs) !== 1) givens[i] = solution[i];
   }
+  const unused = shuffle(all.filter((q) => !ineqs.includes(q)));
+  ineqs = [...ineqs, ...unused.slice(0, extraSigns)];
   return { n, givens, ineqs, solution };
 }
 

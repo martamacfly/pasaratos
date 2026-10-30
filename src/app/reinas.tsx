@@ -10,7 +10,7 @@ import { type CellState, conflicts, generate } from '@/games/reinas';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
-const SIZES = [6, 7, 8];
+const SIZES = [5, 6, 7, 8];
 const REGION_COLORS = ['#FFC9C9', '#FFD8A8', '#FFEC99', '#C0EB75', '#96F2D7', '#A5D8FF', '#D0BFFF', '#FCC2D7', '#CED4DA'];
 
 const emptyBoard = (n: number): CellState[][] => Array.from({ length: n }, () => Array(n).fill(0));

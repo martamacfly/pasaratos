@@ -5,12 +5,11 @@ export type Dir = 'across' | 'down';
 export type Entry = { number: number; word: string; clue: string; row: number; col: number; dir: Dir };
 export type Crossword = { rows: number; cols: number; grid: (string | null)[][]; entries: Entry[] };
 
-const MAX_SIZE = 11;
-const TARGET_WORDS = 10;
-
 type Placed = { word: string; clue: string; row: number; col: number; dir: Dir };
 
 class Builder {
+  constructor(private maxSize: number) {}
+
   cells = new Map<string, { letter: string; across: boolean; down: boolean }>();
   placed: Placed[] = [];
   minR = 0;
@@ -43,7 +42,7 @@ class Builder {
         return -1;
       }
     }
-    if (maxR - minR + 1 > MAX_SIZE || maxC - minC + 1 > MAX_SIZE) return -1;
+    if (maxR - minR + 1 > this.maxSize || maxC - minC + 1 > this.maxSize) return -1;
     return crossings;
   }
 
@@ -86,23 +85,24 @@ class Builder {
   }
 }
 
-function attempt(): Builder {
-  const b = new Builder();
+function attempt(words: number, maxSize: number): Builder {
+  const b = new Builder(maxSize);
   const pool = shuffle(PISTAS);
   const first = pool.find((p) => p.word.length >= 6) ?? pool[0];
   b.place({ ...first, row: 0, col: 0, dir: random() < 0.5 ? 'across' : 'down' });
   for (const p of pool) {
-    if (b.placed.length >= TARGET_WORDS) break;
+    if (b.placed.length >= words) break;
     if (p === first) continue;
     b.tryAdd(p.word, p.clue);
   }
   return b;
 }
 
-export function generate(): Crossword {
-  let best = attempt();
-  for (let i = 0; i < 15 && best.placed.length < TARGET_WORDS; i++) {
-    const b = attempt();
+/** About `words` crossing words that fit in a `maxSize`×`maxSize` grid. */
+export function generate(words = 10, maxSize = 11): Crossword {
+  let best = attempt(words, maxSize);
+  for (let i = 0; i < 15 && best.placed.length < words; i++) {
+    const b = attempt(words, maxSize);
     if (b.placed.length > best.placed.length) best = b;
   }
 
