@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Image, Text, View } from 'react-native';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
@@ -15,7 +16,18 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.bg },
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'Pasaratos' }} />
+        <Stack.Screen
+          name="index"
+          options={{
+            title: 'Pasaratos',
+            headerTitle: () => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Image source={require('../../assets/icon.png')} style={{ width: 32, height: 32, borderRadius: 8 }} />
+                <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>Pasaratos</Text>
+              </View>
+            ),
+          }}
+        />
         <Stack.Screen name="sudoku" options={{ title: 'Sudoku' }} />
         <Stack.Screen name="palabra" options={{ title: 'Palabra oculta' }} />
         <Stack.Screen name="reinas" options={{ title: 'Reinas' }} />
