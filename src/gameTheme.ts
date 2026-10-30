@@ -20,6 +20,9 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   colores: { main: '#7048E8', soft: '#E5DBFF', bg: '#F5F1FF' },
   grupos: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
   autodefinido: { main: '#D9480F', soft: '#FFE8CC', bg: '#FFF4E8' },
+  codigo: { main: '#C92A2A', soft: '#FFE3E3', bg: '#FFF5F5' },
+  deslizante: { main: '#5C940D', soft: '#E9FAC8', bg: '#F6FDE9' },
+  criptograma: { main: '#8D5524', soft: '#F5E6D3', bg: '#FBF6EF' },
   logros: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
 };
 

@@ -49,6 +49,12 @@ export const SECTIONS: { title: string; games: GameInfo[] }[] = [
         name: 'Autodefinido',
         desc: 'Crucigrama con las pistas dentro de la cuadrícula.',
       },
+      {
+        id: 'criptograma',
+        href: '/criptograma',
+        name: 'Criptograma',
+        desc: 'Descifra el refrán: cada número es una letra.',
+      },
     ],
   },
   {
@@ -74,6 +80,18 @@ export const SECTIONS: { title: string; games: GameInfo[] }[] = [
         name: 'Conectar colores',
         desc: 'Une las parejas de colores llenando el tablero.',
       },
+      {
+        id: 'codigo',
+        href: '/codigo',
+        name: 'Descifrar el código',
+        desc: 'Adivina la combinación secreta de colores.',
+      },
+      {
+        id: 'deslizante',
+        href: '/deslizante',
+        name: 'Puzzle deslizante',
+        desc: 'Ordena los números deslizando las fichas.',
+      },
     ],
   },
 ];
@@ -83,6 +101,6 @@ export const ALL_GAMES = SECTIONS.flatMap((s) => s.games);
 export const gameName = (id: string) => ALL_GAMES.find((g) => g.id === id)?.name ?? id;
 
 // Games that can be lost show "won of played"; the rest only count solved puzzles.
-export const CAN_LOSE = new Set<string>(['palabra', 'buscaminas', 'grupos']);
+export const CAN_LOSE = new Set<string>(['palabra', 'buscaminas', 'grupos', 'codigo']);
 
 export const SITE_URL = 'https://martamacfly.github.io/pasaratos/';

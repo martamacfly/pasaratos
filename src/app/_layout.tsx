@@ -38,6 +38,9 @@ export default function RootLayout() {
         <Stack.Screen name="colores" options={{ title: 'Conectar colores' }} />
         <Stack.Screen name="grupos" options={{ title: 'Grupos de 4' }} />
         <Stack.Screen name="autodefinido" options={{ title: 'Autodefinido' }} />
+        <Stack.Screen name="codigo" options={{ title: 'Descifrar el código' }} />
+        <Stack.Screen name="deslizante" options={{ title: 'Puzzle deslizante' }} />
+        <Stack.Screen name="criptograma" options={{ title: 'Criptograma' }} />
         <Stack.Screen name="logros" options={{ title: 'Logros' }} />
       </Stack>
     </>

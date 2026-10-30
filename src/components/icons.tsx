@@ -1,7 +1,7 @@
 // Drawn icons, so the menu and game pieces look the same on every phone (emoji vary by system).
 // Every glyph is drawn in a 100×100 box.
 import type { ReactNode } from 'react';
-import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 type GlyphProps = { ink: string };
 
@@ -307,6 +307,57 @@ const GAME_ICONS: Record<string, { bg: string; draw: () => ReactNode }> = {
         {grid(allCells(3), 3, '#FAB005', '#FFFFFF', (r, c) => (r === 0 && c === 0) || (r === 2 && c === 0))}
         <Path d="M36 30 L44 36 L36 42 Z" fill="#E8590C" />
         <Path d="M25 64 L31 72 L37 64 Z" fill="#E8590C" />
+      </G>
+    ),
+  },
+  codigo: {
+    bg: '#FFE3E3',
+    draw: () => (
+      <G>
+        {['#E03131', '#1971C2', '#2F9E44', '#F59F00'].map((c, k) => (
+          <Circle key={c} cx={22 + k * 19} cy={42} r={8} fill={c} />
+        ))}
+        <Circle cx={36} cy={66} r={5} fill="#212529" />
+        <Circle cx={50} cy={66} r={5} fill="#212529" />
+        <Circle cx={64} cy={66} r={4} fill="#fff" stroke="#212529" strokeWidth={2.5} />
+      </G>
+    ),
+  },
+  deslizante: {
+    bg: '#E9FAC8',
+    draw: () => (
+      <G>
+        {allCells(3)
+          .filter(([r, c]) => !(r === 2 && c === 2))
+          .map(([r, c]) => (
+            <Rect
+              key={`${r}-${c}`}
+              x={20 + c * 21}
+              y={20 + r * 21}
+              width={18}
+              height={18}
+              rx={4}
+              fill={r * 3 + c === 7 ? '#94D82D' : '#5C940D'}
+            />
+          ))}
+      </G>
+    ),
+  },
+  criptograma: {
+    bg: '#F5E6D3',
+    draw: () => (
+      <G>
+        {['C', '?', 'A'].map((l, k) => (
+          <G key={k}>
+            <SvgText x={26 + k * 24} y={48} fontSize={22} fontWeight="900" fill="#8D5524" textAnchor="middle">
+              {l}
+            </SvgText>
+            <Line x1={17 + k * 24} y1={54} x2={35 + k * 24} y2={54} stroke="#8D5524" strokeWidth={3} />
+            <SvgText x={26 + k * 24} y={72} fontSize={13} fontWeight="700" fill="#A9825F" textAnchor="middle">
+              {[7, 12, 3][k]}
+            </SvgText>
+          </G>
+        ))}
       </G>
     ),
   },
