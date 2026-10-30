@@ -6,8 +6,9 @@ import { isUnlocked, LEVEL_COUNT, useLevelProgress } from '@/levels';
 import { colors } from '@/theme';
 
 /**
- * "Nivel N" with arrows to move between open levels, and a grid of all levels of the
- * current difficulty showing which are completed, open or still locked.
+ * "Nivel N" with arrows to move between open levels, a button to restart the current one from
+ * scratch, and a grid of all levels of the current difficulty showing which are completed, open
+ * or still locked. A level already completed is marked as such whenever it is on screen.
  */
 export function LevelBar({
   game,
@@ -28,6 +29,7 @@ export function LevelBar({
   const [open, setOpen] = useState(false);
   const canPrev = level > 1;
   const canNext = level < count && isUnlocked(done, level + 1);
+  const completed = done.includes(level);
 
   return (
     <View style={styles.wrap}>
@@ -35,16 +37,28 @@ export function LevelBar({
         <Pressable disabled={!canPrev} onPress={() => onPick(level - 1)} style={[styles.arrow, !canPrev && styles.off]}>
           <Text style={[styles.arrowText, { color: theme.main }]}>‹</Text>
         </Pressable>
-        <Pressable onPress={() => setOpen((o) => !o)} style={[styles.current, { backgroundColor: theme.soft }]}>
-          <Text style={[styles.currentText, { color: theme.main }]}>
+        <Pressable
+          onPress={() => setOpen((o) => !o)}
+          style={[styles.current, { backgroundColor: completed ? colors.successSoft : theme.soft }]}
+        >
+          <Text style={[styles.currentText, { color: completed ? colors.success : theme.main }]}>
             Nivel {level} de {count}
           </Text>
-          <Text style={styles.progressText}>
-            {done.length} completados · {open ? 'ocultar' : 'ver todos'}
+          <Text style={[styles.progressText, completed && { color: colors.success }]}>
+            {completed ? '✓ Completado' : `${done.length} completados`} · {open ? 'ocultar' : 'ver todos'}
           </Text>
         </Pressable>
         <Pressable disabled={!canNext} onPress={() => onPick(level + 1)} style={[styles.arrow, !canNext && styles.off]}>
           <Text style={[styles.arrowText, { color: theme.main }]}>›</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Reiniciar nivel"
+          onPress={() => onPick(level)}
+          style={({ pressed }) => [styles.arrow, styles.restart, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={[styles.restartIcon, { color: theme.main }]}>↺</Text>
+          <Text style={[styles.restartText, { color: theme.main }]}>Reiniciar</Text>
         </Pressable>
       </View>
 
@@ -97,6 +111,9 @@ const styles = StyleSheet.create({
   },
   arrowText: { fontSize: 30, fontWeight: '800', lineHeight: 34 },
   off: { opacity: 0.35 },
+  restart: { width: 64 },
+  restartIcon: { fontSize: 20, fontWeight: '900', lineHeight: 22 },
+  restartText: { fontSize: 10, fontWeight: '800' },
   current: { flex: 1, borderRadius: 14, paddingVertical: 6, alignItems: 'center' },
   currentText: { fontSize: 16, fontWeight: '900' },
   progressText: { fontSize: 12, color: colors.muted, fontWeight: '600' },

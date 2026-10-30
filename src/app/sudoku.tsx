@@ -218,7 +218,7 @@ export default function SudokuScreen() {
                 style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
               />
               <Button
-                label={notesMode ? '✏️ Notas: sí' : '✏️ Notas: no'}
+                label="Notas"
                 variant={notesMode ? 'primary' : 'secondary'}
                 onPress={() => setNotesMode((m) => !m)}
                 style={{ flex: 1 }}
