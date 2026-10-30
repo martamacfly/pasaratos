@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -17,8 +18,7 @@ const DIFFICULTIES: { key: Difficulty; label: string }[] = [
 ];
 
 export default function SudokuScreen() {
-  const { width } = useWindowDimensions();
-  const size = Math.min(width - 32, 460);
+  const { wide, board: size, panel } = useGameSizes();
   const cell = size / 9;
 
   const { daily, date, seed, saveKey } = useDaily('sudoku');
@@ -83,118 +83,125 @@ export default function SudokuScreen() {
   const selectedValue = selected !== null ? board[selected] : 0;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {DIFFICULTIES.map((d) => (
-            <Button
-              key={d.key}
-              label={d.label}
-              variant={d.key === difficulty ? 'primary' : 'secondary'}
-              onPress={() => newGame(d.key)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      <Text style={styles.timer}>
-        {formatTime(seconds)}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={[styles.grid, { width: size, height: size }]}>
-        {board.map((n, i) => {
-          const r = Math.floor(i / 9);
-          const c = i % 9;
-          const given = game.puzzle[i] !== 0;
-          const isSelected = i === selected;
-          const related = selected !== null && sameUnit(i, selected);
-          const sameNumber = n !== 0 && n === selectedValue;
-          return (
-            <Pressable
-              key={i}
-              onPress={() => setSelected(i)}
-              style={[
-                styles.cell,
-                {
-                  width: cell,
-                  height: cell,
-                  borderRightWidth: c === 8 ? 0 : c % 3 === 2 ? 2 : 0.5,
-                  borderBottomWidth: r === 8 ? 0 : r % 3 === 2 ? 2 : 0.5,
-                },
-                related && { backgroundColor: '#EEF2FF' },
-                sameNumber && { backgroundColor: colors.accentSoft },
-                isSelected && { backgroundColor: '#BAC8FF' },
-              ]}
-            >
-              {n !== 0 ? (
-                <Text
-                  style={{
-                    fontSize: cell * 0.55,
-                    fontWeight: given ? '700' : '500',
-                    color: bad.has(i) && !given ? colors.danger : given ? colors.text : colors.accent,
-                  }}
-                >
-                  {n}
-                </Text>
-              ) : (
-                <View style={styles.notes}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                    <Text key={d} style={[styles.note, { width: cell / 3 - 1, fontSize: cell * 0.22 }]}>
-                      {notes[i] & (1 << d) ? d : ''}
-                    </Text>
-                  ))}
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {solved ? (
-        <View style={{ width: size, gap: 10 }}>
-          <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />
+    <GameLayout
+      top={
+        <>
           {daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/sudoku')} />
+            <DailyHeader />
           ) : (
-            <Button label="Nueva partida" onPress={() => newGame(difficulty)} />
+            <View style={styles.row}>
+              {DIFFICULTIES.map((d) => (
+                <Button
+                  key={d.key}
+                  label={d.label}
+                  variant={d.key === difficulty ? 'primary' : 'secondary'}
+                  onPress={() => newGame(d.key)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
           )}
+          <Text style={styles.timer}>
+            {formatTime(seconds)}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={[styles.grid, { width: size, height: size }]}>
+          {board.map((n, i) => {
+            const r = Math.floor(i / 9);
+            const c = i % 9;
+            const given = game.puzzle[i] !== 0;
+            const isSelected = i === selected;
+            const related = selected !== null && sameUnit(i, selected);
+            const sameNumber = n !== 0 && n === selectedValue;
+            return (
+              <Pressable
+                key={i}
+                onPress={() => setSelected(i)}
+                style={[
+                  styles.cell,
+                  {
+                    width: cell,
+                    height: cell,
+                    borderRightWidth: c === 8 ? 0 : c % 3 === 2 ? 2 : 0.5,
+                    borderBottomWidth: r === 8 ? 0 : r % 3 === 2 ? 2 : 0.5,
+                  },
+                  related && { backgroundColor: '#EEF2FF' },
+                  sameNumber && { backgroundColor: colors.accentSoft },
+                  isSelected && { backgroundColor: '#BAC8FF' },
+                ]}
+              >
+                {n !== 0 ? (
+                  <Text
+                    style={{
+                      fontSize: cell * 0.55,
+                      fontWeight: given ? '700' : '500',
+                      color: bad.has(i) && !given ? colors.danger : given ? colors.text : colors.accent,
+                    }}
+                  >
+                    {n}
+                  </Text>
+                ) : (
+                  <View style={styles.notes}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                      <Text key={d} style={[styles.note, { width: cell / 3 - 1, fontSize: cell * 0.22 }]}>
+                        {notes[i] & (1 << d) ? d : ''}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
         </View>
-      ) : (
-        <View style={{ width: size, gap: 10 }}>
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
-              const used = board.filter((v) => v === n).length >= 9;
-              return (
-                <Pressable
-                  key={n}
-                  onPress={() => input(n)}
-                  style={[styles.key, { opacity: used ? 0.3 : 1 }]}
-                >
-                  <Text style={styles.keyText}>{n}</Text>
-                </Pressable>
-              );
-            })}
+      }
+      side={
+        solved ? (
+          <View style={{ width: panel, gap: 10 }}>
+            <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />
+            {daily ? (
+              <Button label="Jugar partida libre" onPress={() => router.replace('/sudoku')} />
+            ) : (
+              <Button label="Nueva partida" onPress={() => newGame(difficulty)} />
+            )}
           </View>
-          <View style={styles.row}>
-            <Button label="Borrar" variant="secondary" onPress={() => input(0)} style={{ flex: 1 }} />
-            <Button
-              label={notesMode ? '✏️ Notas: sí' : '✏️ Notas: no'}
-              variant={notesMode ? 'primary' : 'secondary'}
-              onPress={() => setNotesMode((m) => !m)}
-              style={{ flex: 1 }}
-            />
+        ) : (
+          <View style={{ width: panel, gap: 10 }}>
+            <View style={[styles.row, wide && styles.padWide]}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+                const used = board.filter((v) => v === n).length >= 9;
+                return (
+                  <Pressable
+                    key={n}
+                    onPress={() => input(n)}
+                    style={[styles.key, wide && styles.keyWide, { opacity: used ? 0.3 : 1 }]}
+                  >
+                    <Text style={styles.keyText}>{n}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.row}>
+              <Button label="Borrar" variant="secondary" onPress={() => input(0)} style={{ flex: 1 }} />
+              <Button
+                label={notesMode ? '✏️ Notas: sí' : '✏️ Notas: no'}
+                variant={notesMode ? 'primary' : 'secondary'}
+                onPress={() => setNotesMode((m) => !m)}
+                style={{ flex: 1 }}
+              />
+            </View>
           </View>
-        </View>
-      )}
-    </ScrollView>
+        )
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
+  padWide: { flexWrap: 'wrap' },
+  keyWide: { flexBasis: '30%', aspectRatio: 1.6 },
   row: { flexDirection: 'row', gap: 6, alignSelf: 'stretch', maxWidth: 460, width: '100%' },
   timer: {
     fontSize: 15,

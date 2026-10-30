@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { keyMarks, type Mark, score } from '@/games/palabra';
@@ -26,7 +27,9 @@ const MARK_COLORS: Record<Mark, string> = {
 
 export default function PalabraScreen() {
   const { width } = useWindowDimensions();
-  const boardWidth = Math.min(width - 32, 340);
+  const { wide, board, panel } = useGameSizes(340);
+  // Five tiles look oversized beyond ~400 px, even on a wide screen.
+  const boardWidth = Math.min(board, 400);
   const tile = (boardWidth - (LENGTH - 1) * 6) / LENGTH;
 
   const { daily, date, seed, saveKey } = useDaily('palabra');
@@ -104,101 +107,109 @@ export default function PalabraScreen() {
   if (!loaded) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.levels}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => restart(l)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      {stats && (
-        <Text style={styles.stats}>
-          Acertadas {stats.won} de {stats.played}
-        </Text>
-      )}
-      <View style={{ gap: 6 }}>
-        {rows.map((row, r) => (
-          <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
-            {Array.from({ length: LENGTH }, (_, i) => {
-              const mark = row.marks?.[i];
-              const letter = row.word[i] ?? '';
-              return (
-                <View
-                  key={i}
-                  style={[
-                    styles.tile,
-                    { width: tile, height: tile },
-                    letter && !mark && { borderColor: colors.text },
-                    mark && { backgroundColor: MARK_COLORS[mark], borderColor: MARK_COLORS[mark] },
-                  ]}
-                >
-                  <Text style={[styles.tileText, { fontSize: tile * 0.5 }, mark && { color: '#fff' }]}>{letter}</Text>
-                </View>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-
-      <View style={{ minHeight: 48, justifyContent: 'center', width: boardWidth }}>
-        {won ? (
-          <Banner text={`¡Acertaste en ${guesses.length}/${tries}!`} />
-        ) : over ? (
-          <Banner tone="danger" text={`La palabra era ${answer}`} />
-        ) : message ? (
-          <Text style={styles.message}>{message}</Text>
-        ) : null}
-      </View>
-
-      {over ? (
-        <Button
-          label={daily ? 'Jugar partida libre' : 'Otra palabra'}
-          onPress={daily ? () => router.replace('/palabra') : () => restart()}
-          style={{ width: boardWidth }}
-        />
-      ) : (
-        <View style={{ gap: 6, width: Math.min(width - 16, 500) }}>
-          {KEYBOARD.map((line) => (
-            <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
-              {[...line].map((k) => {
-                const mark = keys[k];
-                const wide = k === '<' || k === '>';
+    <GameLayout
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.levels}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => restart(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          {stats && (
+            <Text style={styles.stats}>
+              Acertadas {stats.won} de {stats.played}
+            </Text>
+          )}
+        </>
+      }
+      board={
+        <View style={{ gap: 6 }}>
+          {rows.map((row, r) => (
+            <View key={r} style={{ flexDirection: 'row', gap: 6 }}>
+              {Array.from({ length: LENGTH }, (_, i) => {
+                const mark = row.marks?.[i];
+                const letter = row.word[i] ?? '';
                 return (
-                  <Pressable
-                    key={k}
-                    onPress={() => press(k)}
-                    style={({ pressed }) => [
-                      styles.key,
-                      { flex: wide ? 1.5 : 1 },
-                      mark && { backgroundColor: MARK_COLORS[mark] },
-                      pressed && { opacity: 0.7 },
+                  <View
+                    key={i}
+                    style={[
+                      styles.tile,
+                      { width: tile, height: tile },
+                      letter && !mark && { borderColor: colors.text },
+                      mark && { backgroundColor: MARK_COLORS[mark], borderColor: MARK_COLORS[mark] },
                     ]}
                   >
-                    <Text style={[styles.keyText, mark && { color: '#fff' }]}>
-                      {k === '<' ? '⌫' : k === '>' ? 'ENVIAR' : k}
-                    </Text>
-                  </Pressable>
+                    <Text style={[styles.tileText, { fontSize: tile * 0.5 }, mark && { color: '#fff' }]}>{letter}</Text>
+                  </View>
                 );
               })}
             </View>
           ))}
         </View>
-      )}
-    </ScrollView>
+      }
+      side={
+        <>
+          <View style={{ minHeight: 48, justifyContent: 'center', width: wide ? panel : boardWidth }}>
+            {won ? (
+              <Banner text={`¡Acertaste en ${guesses.length}/${tries}!`} />
+            ) : over ? (
+              <Banner tone="danger" text={`La palabra era ${answer}`} />
+            ) : message ? (
+              <Text style={styles.message}>{message}</Text>
+            ) : null}
+          </View>
+
+          {over ? (
+            <Button
+              label={daily ? 'Jugar partida libre' : 'Otra palabra'}
+              onPress={daily ? () => router.replace('/palabra') : () => restart()}
+              style={{ width: wide ? panel : boardWidth }}
+            />
+          ) : (
+            <View style={{ gap: 6, width: wide ? panel : Math.min(width - 16, 500) }}>
+              {KEYBOARD.map((line) => (
+                <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
+                  {[...line].map((k) => {
+                    const mark = keys[k];
+                    const wide = k === '<' || k === '>';
+                    return (
+                      <Pressable
+                        key={k}
+                        onPress={() => press(k)}
+                        style={({ pressed }) => [
+                          styles.key,
+                          { flex: wide ? 1.5 : 1 },
+                          mark && { backgroundColor: MARK_COLORS[mark] },
+                          pressed && { opacity: 0.7 },
+                        ]}
+                      >
+                        <Text style={[styles.keyText, mark && { color: '#fff' }]}>
+                          {k === '<' ? '⌫' : k === '>' ? 'ENVIAR' : k}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          )}
+        </>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   tile: {
     borderWidth: 2,
     borderColor: colors.border,

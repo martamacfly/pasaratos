@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -26,14 +27,14 @@ export default function CrucigramaScreen() {
   const { daily, date, seed, saveKey } = useDaily('crucigrama');
   const [level, setLevel] = useState<Level>('normal');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => create('normal')) : create('normal')));
-  const { rows, cols, grid, entries } = puzzle;
+  const { cols, grid, entries } = puzzle;
   const [letters, setLetters] = useState<string[][]>(() => grid.map((r) => r.map(() => '')));
   const [pos, setPos] = useState<[number, number]>([entries[0].row, entries[0].col]);
   const [dir, setDir] = useState<Dir>(entries[0].dir);
   const [checked, setChecked] = useState(false);
 
-  const gridWidth = Math.min(width - 32, 460);
-  const cell = Math.min(gridWidth / cols, 44);
+  const { wide, board: gridWidth, panel } = useGameSizes(460);
+  const cell = Math.min(gridWidth / cols, wide ? 56 : 44);
 
   const solved = grid.every((row, r) => row.every((l, c) => l === null || letters[r][c] === l));
   const [seconds, setSeconds] = useTimer(!solved);
@@ -132,128 +133,141 @@ export default function CrucigramaScreen() {
   if (!loaded) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.levels}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => newGame(l)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      <Text style={styles.timer}>
-        {formatTime(seconds)}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View>
-        {grid.map((row, r) => (
-          <View key={r} style={{ flexDirection: 'row' }}>
-            {row.map((l, c) => {
-              const key = `${r},${c}`;
-              if (l === null) return <View key={key} style={{ width: cell, height: cell }} />;
-              const isPos = r === pos[0] && c === pos[1];
-              const wrong = checked && letters[r][c] && letters[r][c] !== l;
-              return (
-                <Pressable
-                  key={key}
-                  onPress={() => selectCell(r, c)}
-                  style={[
-                    styles.cell,
-                    { width: cell, height: cell },
-                    activeCells.has(key) && { backgroundColor: theme.soft },
-                    isPos && { backgroundColor: theme.main + '66' },
-                    wrong && { backgroundColor: colors.dangerSoft },
-                  ]}
-                >
-                  {numberAt.has(key) && (
-                    <Text style={[styles.number, { fontSize: cell * 0.26 }]}>{numberAt.get(key)}</Text>
-                  )}
-                  <Text style={{ fontSize: cell * 0.55, fontWeight: '700', color: wrong ? colors.danger : colors.text }}>
-                    {letters[r][c]}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-
-      {solved ? (
-        <View style={{ width: gridWidth, gap: 10 }}>
-          <Banner text={`¡Crucigrama completo en ${formatTime(seconds)}!`} />
-          {daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/crucigrama')} />
-          ) : (
-            <Button label="Nuevo crucigrama" onPress={() => newGame()} />
-          )}
-        </View>
-      ) : (
+    <GameLayout
+      top={
         <>
-          <View style={[styles.clueBar, { width: gridWidth, backgroundColor: theme.soft }]}>
-            <Text style={styles.clueBarText}>
-              {active.number} {active.dir === 'across' ? 'Horizontal' : 'Vertical'} · {active.clue}
-            </Text>
-          </View>
-          <View style={{ gap: 6, width: Math.min(width - 16, 500) }}>
-            {KEYBOARD.map((line) => (
-              <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
-                {[...line].map((k) => (
-                  <Pressable
-                    key={k}
-                    onPress={() => press(k)}
-                    style={({ pressed }) => [styles.key, { flex: k === '<' ? 1.5 : 1 }, pressed && { opacity: 0.7 }]}
-                  >
-                    <Text style={styles.keyText}>{k === '<' ? '⌫' : k}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ))}
-          </View>
-          <View style={[styles.actions, { width: gridWidth }]}>
-            <Button label="Comprobar" variant="secondary" onPress={() => setChecked(true)} style={{ flex: 1 }} />
-            <Button label="Revelar letra" variant="secondary" onPress={reveal} style={{ flex: 1 }} />
-          </View>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.levels}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => newGame(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.timer}>
+            {formatTime(seconds)}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
         </>
-      )}
-
-      <View style={{ width: gridWidth, gap: 16 }}>
-        {(['across', 'down'] as Dir[]).map((d) => (
-          <View key={d} style={{ gap: 4 }}>
-            <Text style={styles.heading}>{d === 'across' ? 'Horizontales' : 'Verticales'}</Text>
-            {clues(d).map((e) => {
-              const done = cellsOf(e).every(([r, c]) => letters[r][c]);
-              return (
-                <Pressable key={`${d}${e.number}`} onPress={() => selectEntry(e)}>
-                  <Text
+      }
+      board={
+        <View>
+          {grid.map((row, r) => (
+            <View key={r} style={{ flexDirection: 'row' }}>
+              {row.map((l, c) => {
+                const key = `${r},${c}`;
+                if (l === null) return <View key={key} style={{ width: cell, height: cell }} />;
+                const isPos = r === pos[0] && c === pos[1];
+                const wrong = checked && letters[r][c] && letters[r][c] !== l;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => selectCell(r, c)}
                     style={[
-                      styles.clue,
-                      e === active && { backgroundColor: theme.soft },
-                      done && { color: colors.muted, textDecorationLine: 'line-through' },
+                      styles.cell,
+                      { width: cell, height: cell },
+                      activeCells.has(key) && { backgroundColor: theme.soft },
+                      isPos && { backgroundColor: theme.main + '66' },
+                      wrong && { backgroundColor: colors.dangerSoft },
                     ]}
                   >
-                    <Text style={{ fontWeight: '700' }}>{e.number}.</Text> {e.clue} ({e.word.length})
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    {numberAt.has(key) && (
+                      <Text style={[styles.number, { fontSize: cell * 0.26 }]}>{numberAt.get(key)}</Text>
+                    )}
+                    <Text
+                      style={{ fontSize: cell * 0.55, fontWeight: '700', color: wrong ? colors.danger : colors.text }}
+                    >
+                      {letters[r][c]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      }
+      side={
+        <>
+          {solved ? (
+            <View style={{ width: panel, gap: 10 }}>
+              <Banner text={`¡Crucigrama completo en ${formatTime(seconds)}!`} />
+              {daily ? (
+                <Button label="Jugar partida libre" onPress={() => router.replace('/crucigrama')} />
+              ) : (
+                <Button label="Nuevo crucigrama" onPress={() => newGame()} />
+              )}
+            </View>
+          ) : (
+            <>
+              <View style={[styles.clueBar, { width: panel, backgroundColor: theme.soft }]}>
+                <Text style={styles.clueBarText}>
+                  {active.number} {active.dir === 'across' ? 'Horizontal' : 'Vertical'} · {active.clue}
+                </Text>
+              </View>
+              <View style={{ gap: 6, width: wide ? panel : Math.min(width - 16, 500) }}>
+                {KEYBOARD.map((line) => (
+                  <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
+                    {[...line].map((k) => (
+                      <Pressable
+                        key={k}
+                        onPress={() => press(k)}
+                        style={({ pressed }) => [
+                          styles.key,
+                          { flex: k === '<' ? 1.5 : 1 },
+                          pressed && { opacity: 0.7 },
+                        ]}
+                      >
+                        <Text style={styles.keyText}>{k === '<' ? '⌫' : k}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ))}
+              </View>
+              <View style={[styles.actions, { width: panel }]}>
+                <Button label="Comprobar" variant="secondary" onPress={() => setChecked(true)} style={{ flex: 1 }} />
+                <Button label="Revelar letra" variant="secondary" onPress={reveal} style={{ flex: 1 }} />
+              </View>
+            </>
+          )}
+
+          <View style={{ width: panel, gap: 16 }}>
+            {(['across', 'down'] as Dir[]).map((d) => (
+              <View key={d} style={{ gap: 4 }}>
+                <Text style={styles.heading}>{d === 'across' ? 'Horizontales' : 'Verticales'}</Text>
+                {clues(d).map((e) => {
+                  const done = cellsOf(e).every(([r, c]) => letters[r][c]);
+                  return (
+                    <Pressable key={`${d}${e.number}`} onPress={() => selectEntry(e)}>
+                      <Text
+                        style={[
+                          styles.clue,
+                          e === active && { backgroundColor: theme.soft },
+                          done && { color: colors.muted, textDecorationLine: 'line-through' },
+                        ]}
+                      >
+                        <Text style={{ fontWeight: '700' }}>{e.number}.</Text> {e.clue} ({e.word.length})
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+            {!solved && !daily && <Button label="Nuevo crucigrama" variant="secondary" onPress={() => newGame()} />}
           </View>
-        ))}
-        {!solved && !daily && <Button label="Nuevo crucigrama" variant="secondary" onPress={() => newGame()} />}
-      </View>
-    </ScrollView>
+        </>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   levels: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   timer: {
     fontSize: 15,

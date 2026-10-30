@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -19,11 +20,12 @@ function deal(index: number) {
 }
 
 export default function GruposScreen() {
-  const { width } = useWindowDimensions();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('grupos');
   const [game, setGame] = useState(() =>
-    daily ? withSeed(seed, () => deal(Math.floor(random() * PUZZLES.length))) : deal(Math.floor(Math.random() * PUZZLES.length)),
+    daily
+      ? withSeed(seed, () => deal(Math.floor(random() * PUZZLES.length)))
+      : deal(Math.floor(Math.random() * PUZZLES.length)),
   );
   const [found, setFound] = useState<number[]>([]); // group indices, in the order they were solved
   const [mistakes, setMistakes] = useState(0);
@@ -31,7 +33,8 @@ export default function GruposScreen() {
   const [message, setMessage] = useState('');
   const [finished, setFinished] = useState(false);
   const puzzle = PUZZLES[game.index];
-  const boardWidth = Math.min(width - 32, 460);
+  const { board, panel } = useGameSizes(460);
+  const boardWidth = Math.min(board, 520);
   const tile = (boardWidth - 3 * 8) / 4;
 
   const won = found.length === 4;
@@ -91,84 +94,95 @@ export default function GruposScreen() {
   const remaining = game.order.filter((w) => !shown.includes(groupOf(puzzle, w)));
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily && <DailyHeader />}
-      <Text style={styles.help}>Forma cuatro grupos de cuatro palabras que tengan algo en común.</Text>
-      {stats && (
-        <Text style={styles.stats}>
-          Ganadas {stats.won} de {stats.played}
-        </Text>
-      )}
-
-      <View style={{ width: boardWidth, gap: 8 }}>
-        {shown.map((g) => (
-          <View key={g} style={[styles.solved, { backgroundColor: GROUP_COLORS[g] }]}>
-            <Text style={styles.solvedTitle}>{puzzle[g].title}</Text>
-            <Text style={styles.solvedWords}>{puzzle[g].words.join(' · ')}</Text>
-          </View>
-        ))}
-        <View style={styles.grid}>
-          {remaining.map((w) => {
-            const on = selected.includes(w);
-            return (
-              <Pressable
-                key={w}
-                onPress={() => toggle(w)}
-                style={({ pressed }) => [
-                  styles.tile,
-                  { width: tile, height: tile * 0.75 },
-                  on && { backgroundColor: theme.main, borderBottomColor: theme.main },
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <Text
-                  style={[styles.word, { fontSize: Math.min(15, (tile - 12) / (w.length * 0.82)) }, on && { color: '#fff' }]}
-                  numberOfLines={1}
+    <GameLayout
+      top={
+        <>
+          {daily && <DailyHeader />}
+          <Text style={styles.help}>Forma cuatro grupos de cuatro palabras que tengan algo en común.</Text>
+          {stats && (
+            <Text style={styles.stats}>
+              Ganadas {stats.won} de {stats.played}
+            </Text>
+          )}
+        </>
+      }
+      board={
+        <View style={{ width: boardWidth, gap: 8 }}>
+          {shown.map((g) => (
+            <View key={g} style={[styles.solved, { backgroundColor: GROUP_COLORS[g] }]}>
+              <Text style={styles.solvedTitle}>{puzzle[g].title}</Text>
+              <Text style={styles.solvedWords}>{puzzle[g].words.join(' · ')}</Text>
+            </View>
+          ))}
+          <View style={styles.grid}>
+            {remaining.map((w) => {
+              const on = selected.includes(w);
+              return (
+                <Pressable
+                  key={w}
+                  onPress={() => toggle(w)}
+                  style={({ pressed }) => [
+                    styles.tile,
+                    { width: tile, height: tile * 0.75 },
+                    on && { backgroundColor: theme.main, borderBottomColor: theme.main },
+                    pressed && { opacity: 0.8 },
+                  ]}
                 >
-                  {w}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={styles.mistakes}>
-        <Text style={styles.mistakesLabel}>Fallos disponibles:</Text>
-        {Array.from({ length: MISTAKES }, (_, k) => (
-          <View key={k} style={[styles.dot, k < MISTAKES - mistakes ? styles.dotOn : styles.dotOff]} />
-        ))}
-      </View>
-      <View style={{ minHeight: 22 }}>{message ? <Text style={styles.message}>{message}</Text> : null}</View>
-
-      <View style={{ width: boardWidth, gap: 10 }}>
-        {won && <Banner text="¡Todos los grupos encontrados!" />}
-        {lost && <Banner tone="danger" text="Se acabaron los fallos. Estas eran las soluciones." />}
-        {over ? (
-          daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/grupos')} />
-          ) : (
-            <Button label="Otra partida" onPress={newGame} />
-          )
-        ) : (
-          <View style={styles.row}>
-            <Button
-              label="Mezclar"
-              variant="secondary"
-              onPress={() => setGame((g) => ({ ...g, order: shuffle(g.order) }))}
-              style={{ flex: 1 }}
-            />
-            <Button label="Quitar" variant="secondary" onPress={() => setSelected([])} style={{ flex: 1 }} />
-            <Button label="Enviar" onPress={submit} style={{ flex: 1, opacity: selected.length === 4 ? 1 : 0.5 }} />
+                  <Text
+                    style={[
+                      styles.word,
+                      { fontSize: Math.min(15, (tile - 12) / (w.length * 0.82)) },
+                      on && { color: '#fff' },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {w}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
-        )}
-      </View>
-    </ScrollView>
+        </View>
+      }
+      side={
+        <>
+          <View style={styles.mistakes}>
+            <Text style={styles.mistakesLabel}>Fallos disponibles:</Text>
+            {Array.from({ length: MISTAKES }, (_, k) => (
+              <View key={k} style={[styles.dot, k < MISTAKES - mistakes ? styles.dotOn : styles.dotOff]} />
+            ))}
+          </View>
+          <View style={{ minHeight: 22 }}>{message ? <Text style={styles.message}>{message}</Text> : null}</View>
+
+          <View style={{ width: panel, gap: 10 }}>
+            {won && <Banner text="¡Todos los grupos encontrados!" />}
+            {lost && <Banner tone="danger" text="Se acabaron los fallos. Estas eran las soluciones." />}
+            {over ? (
+              daily ? (
+                <Button label="Jugar partida libre" onPress={() => router.replace('/grupos')} />
+              ) : (
+                <Button label="Otra partida" onPress={newGame} />
+              )
+            ) : (
+              <View style={styles.row}>
+                <Button
+                  label="Mezclar"
+                  variant="secondary"
+                  onPress={() => setGame((g) => ({ ...g, order: shuffle(g.order) }))}
+                  style={{ flex: 1 }}
+                />
+                <Button label="Quitar" variant="secondary" onPress={() => setSelected([])} style={{ flex: 1 }} />
+                <Button label="Enviar" onPress={submit} style={{ flex: 1, opacity: selected.length === 4 ? 1 : 0.5 }} />
+              </View>
+            )}
+          </View>
+        </>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
   stats: { fontSize: 15, color: colors.muted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

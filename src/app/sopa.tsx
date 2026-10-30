@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -22,7 +23,6 @@ const FOUND_COLORS = ['#FFC9C9', '#FFD8A8', '#FFEC99', '#C0EB75', '#96F2D7', '#A
 const create = (l: Level) => generate(LEVELS[l].size, LEVELS[l].words, LEVELS[l].backwards);
 
 export default function SopaScreen() {
-  const { width } = useWindowDimensions();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('sopa');
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'facil');
@@ -31,7 +31,7 @@ export default function SopaScreen() {
   const [start, setStart] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const { size, letters, words } = sopa;
-  const boardSize = Math.min(width - 32, 460);
+  const { board: boardSize, panel } = useGameSizes(460);
   const cell = boardSize / size;
 
   const solved = found.length === words.length;
@@ -91,74 +91,79 @@ export default function SopaScreen() {
   });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => newGame(l)}
-              style={{ flex: 1 }}
-            />
+    <GameLayout
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.row}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => newGame(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.help}>
+            Toca la primera y la última letra de cada palabra.
+            {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
+          </Text>
+          <Text style={styles.timer}>
+            {formatTime(seconds)} · {found.length}/{words.length}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={[styles.grid, { width: boardSize, height: boardSize }]}>
+          {letters.map((l, i) => (
+            <Pressable
+              key={i}
+              onPress={() => tap(i)}
+              style={[
+                styles.cell,
+                { width: cell, height: cell },
+                colorOf.has(i) && { backgroundColor: colorOf.get(i) },
+                start === i && { backgroundColor: theme.main },
+              ]}
+            >
+              <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: start === i ? '#fff' : colors.text }}>
+                {l}
+              </Text>
+            </Pressable>
           ))}
         </View>
-      )}
-      <Text style={styles.help}>
-        Toca la primera y la última letra de cada palabra.
-        {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
-      </Text>
-      <Text style={styles.timer}>
-        {formatTime(seconds)} · {found.length}/{words.length}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={[styles.grid, { width: boardSize, height: boardSize }]}>
-        {letters.map((l, i) => (
-          <Pressable
-            key={i}
-            onPress={() => tap(i)}
-            style={[
-              styles.cell,
-              { width: cell, height: cell },
-              colorOf.has(i) && { backgroundColor: colorOf.get(i) },
-              start === i && { backgroundColor: theme.main },
-            ]}
-          >
-            <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: start === i ? '#fff' : colors.text }}>
-              {l}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Todas encontradas en ${formatTime(seconds)}!`} />}
-        <View style={styles.words}>
-          {words.map((w) => {
-            const done = found.includes(w.word);
-            return (
-              <Text key={w.word} style={[styles.word, done && styles.wordDone]}>
-                {w.word}
-              </Text>
-            );
-          })}
+      }
+      side={
+        <View style={{ width: panel, gap: 10 }}>
+          {solved && <Banner text={`¡Todas encontradas en ${formatTime(seconds)}!`} />}
+          <View style={styles.words}>
+            {words.map((w) => {
+              const done = found.includes(w.word);
+              return (
+                <Text key={w.word} style={[styles.word, done && styles.wordDone]}>
+                  {w.word}
+                </Text>
+              );
+            })}
+          </View>
+          {daily ? (
+            solved && <Button label="Jugar partida libre" onPress={() => router.replace('/sopa')} />
+          ) : (
+            <Button label="Nueva sopa" variant={solved ? 'primary' : 'secondary'} onPress={() => newGame(level)} />
+          )}
         </View>
-        {daily ? (
-          solved && <Button label="Jugar partida libre" onPress={() => router.replace('/sopa')} />
-        ) : (
-          <Button label="Nueva sopa" variant={solved ? 'primary' : 'secondary'} onPress={() => newGame(level)} />
-        )}
-      </View>
-    </ScrollView>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
   timer: {
@@ -172,7 +177,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.card, borderRadius: radius, overflow: 'hidden' },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: colors.card,
+    borderRadius: radius,
+    overflow: 'hidden',
+  },
   cell: { alignItems: 'center', justifyContent: 'center' },
   words: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   word: {

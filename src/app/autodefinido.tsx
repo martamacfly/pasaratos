@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -19,7 +20,7 @@ export default function AutodefinidoScreen() {
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('autodefinido');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate()) : generate()));
-  const { rows, cols, cells, entries } = puzzle;
+  const { cols, cells, entries } = puzzle;
   const [letters, setLetters] = useState<string[][]>(() => emptyLetters(puzzle));
   const [active, setActive] = useState(0); // index into entries
   const [pos, setPos] = useState<[number, number]>([entries[0].row, entries[0].col]);
@@ -27,7 +28,7 @@ export default function AutodefinidoScreen() {
   const [finished, setFinished] = useState(false);
 
   // Clue cells need room for text, so cells are as large as the screen allows.
-  const gridWidth = Math.min(width - 32, 460);
+  const { wide, board: gridWidth, panel } = useGameSizes(460);
   const cell = Math.min(gridWidth / cols, 64);
 
   const solved = cells.every((row, r) => row.every((c, k) => c.kind !== 'letter' || letters[r][k] === c.letter));
@@ -133,113 +134,138 @@ export default function AutodefinidoScreen() {
   if (!loaded) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily && <DailyHeader />}
-      <Text style={styles.timer}>
-        {formatTime(seconds)}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={styles.board}>
-        {cells.map((row, r) => (
-          <View key={r} style={{ flexDirection: 'row' }}>
-            {row.map((target, c) => {
-              const key = `${r},${c}`;
-              if (target.kind === 'block') return <View key={key} style={[styles.block, { width: cell, height: cell }]} />;
-              if (target.kind === 'clue') {
-                const selected = target.clues.some((x) => x.entry === active);
+    <GameLayout
+      top={
+        <>
+          {daily && <DailyHeader />}
+          <Text style={styles.timer}>
+            {formatTime(seconds)}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={styles.board}>
+          {cells.map((row, r) => (
+            <View key={r} style={{ flexDirection: 'row' }}>
+              {row.map((target, c) => {
+                const key = `${r},${c}`;
+                if (target.kind === 'block')
+                  return <View key={key} style={[styles.block, { width: cell, height: cell }]} />;
+                if (target.kind === 'clue') {
+                  const selected = target.clues.some((x) => x.entry === active);
+                  return (
+                    <Pressable
+                      key={key}
+                      onPress={() => tapCell(r, c)}
+                      style={[
+                        styles.clueCell,
+                        { width: cell, height: cell },
+                        selected && { backgroundColor: '#FFD43B' },
+                      ]}
+                    >
+                      {target.clues.map((x, k) => (
+                        <View
+                          key={k}
+                          style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: '#E0C55C' }]}
+                        >
+                          <Text
+                            style={[
+                              styles.clueText,
+                              { fontSize: Math.max(7, cell * (target.clues.length > 1 ? 0.15 : 0.18)) },
+                            ]}
+                            numberOfLines={target.clues.length > 1 ? 2 : 3}
+                            adjustsFontSizeToFit
+                          >
+                            {x.short}
+                          </Text>
+                          <Text style={[styles.arrow, { fontSize: Math.max(8, cell * 0.17) }]}>
+                            {x.dir === 'across' ? '▶' : '▼'}
+                          </Text>
+                        </View>
+                      ))}
+                    </Pressable>
+                  );
+                }
+                const isPos = r === pos[0] && c === pos[1];
+                const wrong = checked && letters[r][c] && letters[r][c] !== target.letter;
                 return (
                   <Pressable
                     key={key}
                     onPress={() => tapCell(r, c)}
-                    style={[styles.clueCell, { width: cell, height: cell }, selected && { backgroundColor: '#FFD43B' }]}
+                    style={[
+                      styles.letterCell,
+                      { width: cell, height: cell },
+                      activeCells.has(key) && { backgroundColor: theme.soft },
+                      isPos && { backgroundColor: theme.main + '66' },
+                      wrong && { backgroundColor: colors.dangerSoft },
+                    ]}
                   >
-                    {target.clues.map((x, k) => (
-                      <View
-                        key={k}
-                        style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: '#E0C55C' }]}
-                      >
-                        <Text
-                          style={[styles.clueText, { fontSize: Math.max(7, cell * (target.clues.length > 1 ? 0.15 : 0.18)) }]}
-                          numberOfLines={target.clues.length > 1 ? 2 : 3}
-                          adjustsFontSizeToFit
-                        >
-                          {x.short}
-                        </Text>
-                        <Text style={[styles.arrow, { fontSize: Math.max(8, cell * 0.17) }]}>{x.dir === 'across' ? '▶' : '▼'}</Text>
-                      </View>
-                    ))}
+                    <Text
+                      style={{ fontSize: cell * 0.5, fontWeight: '700', color: wrong ? colors.danger : colors.text }}
+                    >
+                      {letters[r][c]}
+                    </Text>
                   </Pressable>
                 );
-              }
-              const isPos = r === pos[0] && c === pos[1];
-              const wrong = checked && letters[r][c] && letters[r][c] !== target.letter;
-              return (
-                <Pressable
-                  key={key}
-                  onPress={() => tapCell(r, c)}
-                  style={[
-                    styles.letterCell,
-                    { width: cell, height: cell },
-                    activeCells.has(key) && { backgroundColor: theme.soft },
-                    isPos && { backgroundColor: theme.main + '66' },
-                    wrong && { backgroundColor: colors.dangerSoft },
-                  ]}
-                >
-                  <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: wrong ? colors.danger : colors.text }}>
-                    {letters[r][c]}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-
-      {solved ? (
-        <View style={{ width: gridWidth, gap: 10 }}>
-          <Banner text={`¡Autodefinido completo en ${formatTime(seconds)}!`} />
-          {daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/autodefinido')} />
-          ) : (
-            <Button label="Nuevo autodefinido" onPress={newGame} />
-          )}
+              })}
+            </View>
+          ))}
         </View>
-      ) : (
+      }
+      side={
         <>
-          <View style={[styles.clueBar, { width: gridWidth, backgroundColor: theme.soft }]}>
-            <Text style={styles.clueBarText}>
-              {entry.dir === 'across' ? '▶' : '▼'} {entry.clue} ({entry.word.length})
-            </Text>
-          </View>
-          <View style={{ gap: 6, width: Math.min(width - 16, 500) }}>
-            {KEYBOARD.map((line) => (
-              <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
-                {[...line].map((k) => (
-                  <Pressable
-                    key={k}
-                    onPress={() => press(k)}
-                    style={({ pressed }) => [styles.key, { flex: k === '<' ? 1.5 : 1 }, pressed && { opacity: 0.7 }]}
-                  >
-                    <Text style={styles.keyText}>{k === '<' ? '⌫' : k}</Text>
-                  </Pressable>
+          {solved ? (
+            <View style={{ width: panel, gap: 10 }}>
+              <Banner text={`¡Autodefinido completo en ${formatTime(seconds)}!`} />
+              {daily ? (
+                <Button label="Jugar partida libre" onPress={() => router.replace('/autodefinido')} />
+              ) : (
+                <Button label="Nuevo autodefinido" onPress={newGame} />
+              )}
+            </View>
+          ) : (
+            <>
+              <View style={[styles.clueBar, { width: panel, backgroundColor: theme.soft }]}>
+                <Text style={styles.clueBarText}>
+                  {entry.dir === 'across' ? '▶' : '▼'} {entry.clue} ({entry.word.length})
+                </Text>
+              </View>
+              <View style={{ gap: 6, width: wide ? panel : Math.min(width - 16, 500) }}>
+                {KEYBOARD.map((line) => (
+                  <View key={line} style={{ flexDirection: 'row', gap: 4, justifyContent: 'center' }}>
+                    {[...line].map((k) => (
+                      <Pressable
+                        key={k}
+                        onPress={() => press(k)}
+                        style={({ pressed }) => [
+                          styles.key,
+                          { flex: k === '<' ? 1.5 : 1 },
+                          pressed && { opacity: 0.7 },
+                        ]}
+                      >
+                        <Text style={styles.keyText}>{k === '<' ? '⌫' : k}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 ))}
               </View>
-            ))}
-          </View>
-          <View style={[styles.actions, { width: gridWidth }]}>
-            <Button label="Comprobar" variant="secondary" onPress={() => setChecked(true)} style={{ flex: 1 }} />
-            <Button label="Revelar letra" variant="secondary" onPress={reveal} style={{ flex: 1 }} />
-          </View>
-          {!daily && <Button label="Nuevo autodefinido" variant="secondary" onPress={newGame} style={{ width: gridWidth }} />}
+              <View style={[styles.actions, { width: panel }]}>
+                <Button label="Comprobar" variant="secondary" onPress={() => setChecked(true)} style={{ flex: 1 }} />
+                <Button label="Revelar letra" variant="secondary" onPress={reveal} style={{ flex: 1 }} />
+              </View>
+              {!daily && (
+                <Button label="Nuevo autodefinido" variant="secondary" onPress={newGame} style={{ width: panel }} />
+              )}
+            </>
+          )}
         </>
-      )}
-    </ScrollView>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   timer: {
     fontSize: 15,
     fontWeight: '800',

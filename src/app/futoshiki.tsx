@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -21,7 +22,6 @@ const LEVELS: Record<Level, { n: number; extraSigns: number; label: string }> = 
 const create = (l: Level) => generate(LEVELS[l].n, LEVELS[l].extraSigns);
 
 export default function FutoshikiScreen() {
-  const { width } = useWindowDimensions();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('futoshiki');
   const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'medio');
@@ -32,7 +32,7 @@ export default function FutoshikiScreen() {
   const { n, givens, ineqs, solution } = puzzle;
 
   // Cells and the gaps holding the < > signs share the width: n cells + (n-1) gaps of 45%.
-  const boardSize = Math.min(width - 32, 420);
+  const { board: boardSize, panel } = useGameSizes(420);
   const cell = boardSize / (n + (n - 1) * 0.45);
   const gap = cell * 0.45;
 
@@ -82,97 +82,110 @@ export default function FutoshikiScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => newGame(l)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      <Text style={styles.help}>
-        Rellena con números del 1 al {n} sin repetir en filas ni columnas, respetando los signos {'<'} y {'>'}.
-      </Text>
-      <Text style={styles.timer}>
-        {formatTime(seconds)}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={{ width: boardSize }}>
-        {Array.from({ length: n }, (_, r) => (
-          <Fragment key={r}>
-            <View style={{ flexDirection: 'row' }}>
-              {Array.from({ length: n }, (_, c) => {
-                const i = r * n + c;
-                return (
-                  <Fragment key={c}>
-                    <Pressable
-                      onPress={() => setSelected(i)}
+    <GameLayout
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.row}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => newGame(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.help}>
+            Rellena con números del 1 al {n} sin repetir en filas ni columnas, respetando los signos {'<'} y {'>'}.
+          </Text>
+          <Text style={styles.timer}>
+            {formatTime(seconds)}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={{ width: boardSize }}>
+          {Array.from({ length: n }, (_, r) => (
+            <Fragment key={r}>
+              <View style={{ flexDirection: 'row' }}>
+                {Array.from({ length: n }, (_, c) => {
+                  const i = r * n + c;
+                  return (
+                    <Fragment key={c}>
+                      <Pressable
+                        onPress={() => setSelected(i)}
+                        style={[
+                          styles.cell,
+                          { width: cell, height: cell },
+                          givens[i] !== 0 && { backgroundColor: '#ECEAE4' },
+                          i === selected && { backgroundColor: theme.main + '40', borderColor: theme.main },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: cell * 0.5,
+                            fontWeight: givens[i] ? '800' : '600',
+                            color: bad.has(i) && !givens[i] ? colors.danger : givens[i] ? colors.text : theme.main,
+                          }}
+                        >
+                          {board[i] || ''}
+                        </Text>
+                      </Pressable>
+                      {c < n - 1 && (
+                        <View style={[styles.gap, { width: gap, height: cell }]}>
+                          <Text style={[styles.sign, { fontSize: gap * 0.8 }]}>{sign(i, i + 1, false)}</Text>
+                        </View>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </View>
+              {r < n - 1 && (
+                <View style={{ flexDirection: 'row' }}>
+                  {Array.from({ length: n }, (_, c) => (
+                    <View
+                      key={c}
                       style={[
-                        styles.cell,
-                        { width: cell, height: cell },
-                        givens[i] !== 0 && { backgroundColor: '#ECEAE4' },
-                        i === selected && { backgroundColor: theme.main + '40', borderColor: theme.main },
+                        styles.gap,
+                        { width: cell + (c < n - 1 ? gap : 0), height: gap, paddingRight: c < n - 1 ? gap : 0 },
                       ]}
                     >
-                      <Text
-                        style={{
-                          fontSize: cell * 0.5,
-                          fontWeight: givens[i] ? '800' : '600',
-                          color: bad.has(i) && !givens[i] ? colors.danger : givens[i] ? colors.text : theme.main,
-                        }}
-                      >
-                        {board[i] || ''}
+                      <Text style={[styles.sign, { fontSize: gap * 0.8 }]}>
+                        {sign(r * n + c, (r + 1) * n + c, true)}
                       </Text>
-                    </Pressable>
-                    {c < n - 1 && (
-                      <View style={[styles.gap, { width: gap, height: cell }]}>
-                        <Text style={[styles.sign, { fontSize: gap * 0.8 }]}>{sign(i, i + 1, false)}</Text>
-                      </View>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </View>
-            {r < n - 1 && (
-              <View style={{ flexDirection: 'row' }}>
-                {Array.from({ length: n }, (_, c) => (
-                  <View key={c} style={[styles.gap, { width: cell + (c < n - 1 ? gap : 0), height: gap, paddingRight: c < n - 1 ? gap : 0 }]}>
-                    <Text style={[styles.sign, { fontSize: gap * 0.8 }]}>{sign(r * n + c, (r + 1) * n + c, true)}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </Fragment>
-        ))}
-      </View>
-
-      <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
-        {solved ? (
-          daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/futoshiki')} />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </Fragment>
+          ))}
+        </View>
+      }
+      side={
+        <View style={{ width: panel, gap: 10 }}>
+          {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
+          {solved ? (
+            daily ? (
+              <Button label="Jugar partida libre" onPress={() => router.replace('/futoshiki')} />
+            ) : (
+              <Button label="Nuevo tablero" onPress={() => newGame()} />
+            )
           ) : (
-            <Button label="Nuevo tablero" onPress={() => newGame()} />
-          )
-        ) : (
-          <NumberPad max={n} onPress={input} width={boardSize} />
-        )}
-      </View>
-    </ScrollView>
+            <NumberPad max={n} onPress={input} width={panel} />
+          )}
+        </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   timer: {

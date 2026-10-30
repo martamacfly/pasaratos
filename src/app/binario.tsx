@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -20,14 +21,13 @@ const LEVELS: Record<Level, { n: number; extra: number; label: string }> = {
 };
 
 export default function BinarioScreen() {
-  const { width } = useWindowDimensions();
   const [level, setLevel] = useState<Level>('medio');
   const [n, setN] = useState(6);
   const { daily, date, seed, saveKey } = useDaily('binario');
   const [game, setGame] = useState(() => (daily ? withSeed(seed, () => generate(6)) : generate(6)));
   const [board, setBoard] = useState<Grid>(game.puzzle);
   const [finished, setFinished] = useState(false);
-  const size = Math.min(width - 32, 420);
+  const { board: size, panel } = useGameSizes(420);
   const cell = size / n;
 
   const bad = useMemo(() => conflicts(board, n), [board, n]);
@@ -70,66 +70,73 @@ export default function BinarioScreen() {
   if (!loaded) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => newGame(l)}
-              style={{ flex: 1 }}
-            />
+    <GameLayout
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.row}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => newGame(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.help}>
+            Rellena con soles y lunas: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y
+            sin filas ni columnas repetidas. Toca una casilla para cambiarla.
+          </Text>
+          <Text style={styles.timer}>
+            {formatTime(seconds)}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={[styles.grid, { width: size, height: size }]}>
+          {board.map((v, i) => (
+            <Pressable
+              key={i}
+              onPress={() => tap(i)}
+              style={[
+                styles.cell,
+                { width: cell, height: cell },
+                game.puzzle[i] !== 0 && { backgroundColor: '#ECEAE4' },
+                bad.has(i) && { backgroundColor: colors.dangerSoft },
+              ]}
+            >
+              {v !== 0 && (
+                <Glyph size={cell * 0.62}>{v === 1 ? <SunGlyph ink="#F08C00" /> : <MoonGlyph ink="#5F3DC4" />}</Glyph>
+              )}
+            </Pressable>
           ))}
         </View>
-      )}
-      <Text style={styles.help}>
-        Rellena con soles y lunas: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y
-        sin filas ni columnas repetidas. Toca una casilla para cambiarla.
-      </Text>
-      <Text style={styles.timer}>
-        {formatTime(seconds)}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={[styles.grid, { width: size, height: size }]}>
-        {board.map((v, i) => (
-          <Pressable
-            key={i}
-            onPress={() => tap(i)}
-            style={[
-              styles.cell,
-              { width: cell, height: cell },
-              game.puzzle[i] !== 0 && { backgroundColor: '#ECEAE4' },
-              bad.has(i) && { backgroundColor: colors.dangerSoft },
-            ]}
-          >
-            {v !== 0 && <Glyph size={cell * 0.62}>{v === 1 ? <SunGlyph ink="#F08C00" /> : <MoonGlyph ink="#5F3DC4" />}</Glyph>}
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={{ width: size, gap: 10 }}>
-        {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
-        {solved ? (
-          daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/binario')} />
+      }
+      side={
+        <View style={{ width: panel, gap: 10 }}>
+          {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}!`} />}
+          {solved ? (
+            daily ? (
+              <Button label="Jugar partida libre" onPress={() => router.replace('/binario')} />
+            ) : (
+              <Button label="Nuevo tablero" onPress={() => newGame(level)} />
+            )
           ) : (
-            <Button label="Nuevo tablero" onPress={() => newGame(level)} />
-          )
-        ) : (
-          <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(game.puzzle)} />
-        )}
-      </View>
-    </ScrollView>
+            <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(game.puzzle)} />
+          )}
+        </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   timer: {

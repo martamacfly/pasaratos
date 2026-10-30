@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { dateLabel } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
-import { colors, radius } from '@/theme';
+import { colors } from '@/theme';
 
 /** Buttons take the colour of the game on screen. */
 export function Button({

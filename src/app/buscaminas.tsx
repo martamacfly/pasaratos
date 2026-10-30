@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { FlagGlyph, Glyph, MineGlyph } from '@/components/icons';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -34,14 +35,13 @@ const dailyState = (level: Level): State => {
 };
 
 export default function BuscaminasScreen() {
-  const { width } = useWindowDimensions();
   const { daily, date, seed, saveKey } = useDaily('buscaminas');
   const [state, setState] = useState<State>(() => (daily ? withSeed(seed, () => dailyState('medio')) : fresh('facil')));
   const [flagMode, setFlagMode] = useState(false);
   const [finished, setFinished] = useState(false);
   const { level, mines, revealed, flags, lost } = state;
   const { size, mines: mineCount } = LEVELS[level];
-  const boardSize = Math.min(width - 32, 460);
+  const { board: boardSize, panel } = useGameSizes(460);
   const cell = boardSize / size;
 
   const won = mines !== null && !lost && revealed.every((r, i) => r || mines[i]);
@@ -109,82 +109,87 @@ export default function BuscaminasScreen() {
   const flagsLeft = mineCount - flags.filter(Boolean).length;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <Button
-              key={l}
-              label={LEVELS[l].label}
-              variant={l === level ? 'primary' : 'secondary'}
-              onPress={() => newGame(l)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      <Text style={styles.timer}>
-        {formatTime(seconds)} · Minas {flagsLeft}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
-        {revealed.map((open, i) => {
-          const isMine = mines?.[i];
-          const showMine = isMine && (open || lost);
-          const n = mines && open && !isMine ? countAround(mines, i, size) : 0;
-          return (
-            <Pressable
-              key={i}
-              onPress={() => tap(i)}
-              style={[
-                styles.cell,
-                { width: cell, height: cell },
-                open ? styles.open : styles.closed,
-                open && isMine && { backgroundColor: colors.danger },
-              ]}
-            >
-              {showMine ? (
-                <Glyph size={cell * 0.7}>
-                  <MineGlyph ink="#212529" />
-                </Glyph>
-              ) : flags[i] ? (
-                <Glyph size={cell * 0.7}>
-                  <FlagGlyph ink={colors.danger} />
-                </Glyph>
-              ) : (
-                <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>{n || ''}</Text>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={{ width: boardSize, gap: 10 }}>
-        {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}!`} />}
-        {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina" />}
-        {over ? (
-          daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />
+    <GameLayout
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
           ) : (
-            <Button label="Otra partida" onPress={() => newGame(level)} />
-          )
-        ) : (
-          <Button
-            label={flagMode ? 'Modo bandera: sí' : 'Modo bandera: no'}
-            variant={flagMode ? 'primary' : 'secondary'}
-            onPress={() => setFlagMode((m) => !m)}
-          />
-        )}
-      </View>
-    </ScrollView>
+            <View style={styles.row}>
+              {(Object.keys(LEVELS) as Level[]).map((l) => (
+                <Button
+                  key={l}
+                  label={LEVELS[l].label}
+                  variant={l === level ? 'primary' : 'secondary'}
+                  onPress={() => newGame(l)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.timer}>
+            {formatTime(seconds)} · Minas {flagsLeft}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
+          {revealed.map((open, i) => {
+            const isMine = mines?.[i];
+            const showMine = isMine && (open || lost);
+            const n = mines && open && !isMine ? countAround(mines, i, size) : 0;
+            return (
+              <Pressable
+                key={i}
+                onPress={() => tap(i)}
+                style={[
+                  styles.cell,
+                  { width: cell, height: cell },
+                  open ? styles.open : styles.closed,
+                  open && isMine && { backgroundColor: colors.danger },
+                ]}
+              >
+                {showMine ? (
+                  <Glyph size={cell * 0.7}>
+                    <MineGlyph ink="#212529" />
+                  </Glyph>
+                ) : flags[i] ? (
+                  <Glyph size={cell * 0.7}>
+                    <FlagGlyph ink={colors.danger} />
+                  </Glyph>
+                ) : (
+                  <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>{n || ''}</Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      }
+      side={
+        <View style={{ width: panel, gap: 10 }}>
+          {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}!`} />}
+          {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina" />}
+          {over ? (
+            daily ? (
+              <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />
+            ) : (
+              <Button label="Otra partida" onPress={() => newGame(level)} />
+            )
+          ) : (
+            <Button
+              label={flagMode ? 'Modo bandera: sí' : 'Modo bandera: no'}
+              variant={flagMode ? 'primary' : 'secondary'}
+              onPress={() => setFlagMode((m) => !m)}
+            />
+          )}
+        </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   timer: {
     fontSize: 15,

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { PathLines } from '@/components/PathLines';
+import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
@@ -15,14 +16,13 @@ import { colors, radius } from '@/theme';
 const SIZES = [5, 6, 7, 8];
 
 export default function CaminoScreen() {
-  const { width } = useWindowDimensions();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('camino');
   const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generateCamino(7)) : generateCamino(6)));
   const [path, setPath] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
   const { n, clues } = puzzle;
-  const boardSize = Math.min(width - 32, 420);
+  const { board: boardSize, panel } = useGameSizes(420);
   const cell = boardSize / n;
   const last = Object.keys(clues).length;
 
@@ -86,86 +86,92 @@ export default function CaminoScreen() {
   const head = path[path.length - 1];
 
   return (
-    <View style={styles.container}>
-      {daily ? (
-        <DailyHeader />
-      ) : (
-        <View style={styles.row}>
-          {SIZES.map((s) => (
-            <Button
-              key={s}
-              label={`${s}×${s}`}
-              variant={s === n ? 'primary' : 'secondary'}
-              onPress={() => newGame(s)}
-              style={{ flex: 1 }}
-            />
-          ))}
-        </View>
-      )}
-      <Text style={styles.help}>
-        Arrastra desde el 1 una línea que pase por todas las casillas y por los números en orden hasta el {last}.
-      </Text>
-      <Text style={styles.timer}>
-        {formatTime(seconds)} · {path.length}/{n * n}
-        {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-      </Text>
-
-      <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
-        {Array.from({ length: n * n }, (_, i) => (
-          <View
-            key={i}
-            pointerEvents="none"
-            style={[
-              styles.cell,
-              { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
-              onPath.has(i) && { backgroundColor: solved ? colors.successSoft : theme.soft },
-            ]}
-          />
-        ))}
-        <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : theme.main} />
-        {Object.entries(clues).map(([c, num]) => {
-          const i = Number(c);
-          const size = cell * 0.62;
-          return (
+    <GameLayout
+      scroll={false}
+      top={
+        <>
+          {daily ? (
+            <DailyHeader />
+          ) : (
+            <View style={styles.row}>
+              {SIZES.map((s) => (
+                <Button
+                  key={s}
+                  label={`${s}×${s}`}
+                  variant={s === n ? 'primary' : 'secondary'}
+                  onPress={() => newGame(s)}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+          )}
+          <Text style={styles.help}>
+            Arrastra desde el 1 una línea que pase por todas las casillas y por los números en orden hasta el {last}.
+          </Text>
+          <Text style={styles.timer}>
+            {formatTime(seconds)} · {path.length}/{n * n}
+            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
+          </Text>
+        </>
+      }
+      board={
+        <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
+          {Array.from({ length: n * n }, (_, i) => (
             <View
-              key={c}
+              key={i}
               pointerEvents="none"
               style={[
-                styles.clue,
-                {
-                  width: size,
-                  height: size,
-                  borderRadius: size / 2,
-                  left: (i % n) * cell + (cell - size) / 2,
-                  top: Math.floor(i / n) * cell + (cell - size) / 2,
-                },
-                i === head && { borderWidth: 3, borderColor: colors.warning },
+                styles.cell,
+                { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
+                onPath.has(i) && { backgroundColor: solved ? colors.successSoft : theme.soft },
               ]}
-            >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
-            </View>
-          );
-        })}
-      </View>
-
-      <View style={{ width: boardSize, gap: 10 }}>
-        {solved && <Banner text={`¡Camino completo en ${formatTime(seconds)}!`} />}
-        {solved ? (
-          daily ? (
-            <Button label="Jugar partida libre" onPress={() => router.replace('/camino')} />
+            />
+          ))}
+          <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : theme.main} />
+          {Object.entries(clues).map(([c, num]) => {
+            const i = Number(c);
+            const size = cell * 0.62;
+            return (
+              <View
+                key={c}
+                pointerEvents="none"
+                style={[
+                  styles.clue,
+                  {
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    left: (i % n) * cell + (cell - size) / 2,
+                    top: Math.floor(i / n) * cell + (cell - size) / 2,
+                  },
+                  i === head && { borderWidth: 3, borderColor: colors.warning },
+                ]}
+              >
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
+              </View>
+            );
+          })}
+        </View>
+      }
+      side={
+        <View style={{ width: panel, gap: 10 }}>
+          {solved && <Banner text={`¡Camino completo en ${formatTime(seconds)}!`} />}
+          {solved ? (
+            daily ? (
+              <Button label="Jugar partida libre" onPress={() => router.replace('/camino')} />
+            ) : (
+              <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+            )
           ) : (
-            <Button label="Nuevo tablero" onPress={() => newGame(n)} />
-          )
-        ) : (
-          <Button label="Borrar camino" variant="secondary" onPress={() => setPath([])} />
-        )}
-      </View>
-    </View>
+            <Button label="Borrar camino" variant="secondary" onPress={() => setPath([])} />
+          )}
+        </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: 6, maxWidth: 420, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   timer: {
