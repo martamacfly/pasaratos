@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -10,7 +11,6 @@ import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
 const SIZES = [6, 8];
-const SYMBOLS = ['', '☀️', '🌙'];
 
 export default function BinarioScreen() {
   const { width } = useWindowDimensions();
@@ -77,8 +77,8 @@ export default function BinarioScreen() {
         </View>
       )}
       <Text style={styles.help}>
-        Rellena con ☀️ y 🌙: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y sin
-        filas ni columnas repetidas.
+        Rellena con soles y lunas: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y
+        sin filas ni columnas repetidas. Toca una casilla para cambiarla.
       </Text>
       <Text style={styles.timer}>
         ⏱ {formatTime(seconds)}
@@ -97,7 +97,7 @@ export default function BinarioScreen() {
               bad.has(i) && { backgroundColor: colors.dangerSoft },
             ]}
           >
-            <Text style={{ fontSize: cell * 0.5 }}>{SYMBOLS[v]}</Text>
+            {v !== 0 && <Glyph size={cell * 0.62}>{v === 1 ? <SunGlyph ink="#F08C00" /> : <MoonGlyph ink="#5F3DC4" />}</Glyph>}
           </Pressable>
         ))}
       </View>

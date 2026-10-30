@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { CrownGlyph, Glyph } from '@/components/icons';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -84,10 +85,10 @@ export default function ReinasScreen() {
       )}
       <Text style={styles.help}>
         Coloca {n} reinas: una por fila, columna y color. Dos reinas no pueden tocarse, ni en diagonal.
-        Toca una vez para marcar ✕ y otra para poner 👑.
+        Toca una vez para marcar ✕ y otra para poner la reina.
       </Text>
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · 👑 {queens}/{n}
+        ⏱ {formatTime(seconds)} · Reinas {queens}/{n}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
       </Text>
 
@@ -111,7 +112,11 @@ export default function ReinasScreen() {
               ]}
             >
               {s === 1 && <Text style={{ fontSize: cell * 0.35, color: '#495057' }}>✕</Text>}
-              {s === 2 && <Text style={{ fontSize: cell * 0.55 }}>👑</Text>}
+              {s === 2 && (
+                <Glyph size={cell * 0.62}>
+                  <CrownGlyph ink={bad.has(`${r},${c}`) ? '#fff' : '#212529'} />
+                </Glyph>
+              )}
             </Pressable>
           )),
         )}

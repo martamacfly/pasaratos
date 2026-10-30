@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
+import { FlagGlyph, Glyph, MineGlyph } from '@/components/icons';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
@@ -125,7 +126,7 @@ export default function BuscaminasScreen() {
         </View>
       )}
       <Text style={styles.timer}>
-        ⏱ {formatTime(seconds)} · 🚩 {flagsLeft}
+        ⏱ {formatTime(seconds)} · Minas {flagsLeft}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
       </Text>
 
@@ -145,9 +146,17 @@ export default function BuscaminasScreen() {
                 open && isMine && { backgroundColor: colors.danger },
               ]}
             >
-              <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>
-                {showMine ? '💣' : flags[i] ? '🚩' : n || ''}
-              </Text>
+              {showMine ? (
+                <Glyph size={cell * 0.7}>
+                  <MineGlyph ink="#212529" />
+                </Glyph>
+              ) : flags[i] ? (
+                <Glyph size={cell * 0.7}>
+                  <FlagGlyph ink={colors.danger} />
+                </Glyph>
+              ) : (
+                <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>{n || ''}</Text>
+              )}
             </Pressable>
           );
         })}
@@ -155,7 +164,7 @@ export default function BuscaminasScreen() {
 
       <View style={{ width: boardSize, gap: 10 }}>
         {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}! 🎉`} />}
-        {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina 💥" />}
+        {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina" />}
         {over ? (
           daily ? (
             <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />
@@ -164,7 +173,7 @@ export default function BuscaminasScreen() {
           )
         ) : (
           <Button
-            label={flagMode ? '🚩 Modo bandera: sí' : '🚩 Modo bandera: no'}
+            label={flagMode ? 'Modo bandera: sí' : 'Modo bandera: no'}
             variant={flagMode ? 'primary' : 'secondary'}
             onPress={() => setFlagMode((m) => !m)}
           />

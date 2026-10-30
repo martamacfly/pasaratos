@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Image, Text, View } from 'react-native';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
@@ -18,15 +17,8 @@ export default function RootLayout() {
       >
         <Stack.Screen
           name="index"
-          options={{
-            title: 'Pasaratos',
-            headerTitle: () => (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Image source={require('../../assets/icon.png')} style={{ width: 32, height: 32, borderRadius: 8 }} />
-                <Text style={{ fontSize: 20, fontWeight: '800', color: colors.text }}>Pasaratos</Text>
-              </View>
-            ),
-          }}
+          // The menu draws its own header with the logo.
+          options={{ title: 'Pasaratos', headerShown: false }}
         />
         <Stack.Screen name="sudoku" options={{ title: 'Sudoku' }} />
         <Stack.Screen name="palabra" options={{ title: 'Palabra oculta' }} />
@@ -36,6 +28,10 @@ export default function RootLayout() {
         <Stack.Screen name="buscaminas" options={{ title: 'Buscaminas' }} />
         <Stack.Screen name="nonograma" options={{ title: 'Nonograma' }} />
         <Stack.Screen name="sopa" options={{ title: 'Sopa de letras' }} />
+        <Stack.Screen name="futoshiki" options={{ title: 'Futoshiki' }} />
+        <Stack.Screen name="calcudoku" options={{ title: 'Calcudoku' }} />
+        <Stack.Screen name="camino" options={{ title: 'Camino numerado' }} />
+        <Stack.Screen name="colores" options={{ title: 'Conectar colores' }} />
       </Stack>
     </>
   );

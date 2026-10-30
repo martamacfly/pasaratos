@@ -37,11 +37,27 @@ export function Banner({ text, tone = 'success' }: { text: string; tone?: 'succe
   );
 }
 
+/** Keys 1..max plus an erase key; `onPress(0)` erases. */
+export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: number) => void; width: number }) {
+  return (
+    <View style={{ width, flexDirection: 'row', gap: 6 }}>
+      {Array.from({ length: max }, (_, k) => k + 1).map((n) => (
+        <Pressable key={n} onPress={() => onPress(n)} style={({ pressed }) => [styles.key, pressed && { opacity: 0.7 }]}>
+          <Text style={styles.keyText}>{n}</Text>
+        </Pressable>
+      ))}
+      <Pressable onPress={() => onPress(0)} style={({ pressed }) => [styles.key, pressed && { opacity: 0.7 }]}>
+        <Text style={[styles.keyText, { color: colors.text }]}>⌫</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /** Shown instead of the difficulty buttons while playing the daily challenge. */
 export function DailyHeader() {
   return (
     <View style={styles.daily}>
-      <Text style={styles.dailyText}>📅 Reto del día · {dateLabel()}</Text>
+      <Text style={styles.dailyText}>Reto del día · {dateLabel()}</Text>
     </View>
   );
 }
@@ -70,4 +86,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dailyText: { fontSize: 15, fontWeight: '700', color: '#8F6400' },
+  key: {
+    flex: 1,
+    height: 56,
+    backgroundColor: colors.card,
+    borderRadius: radius / 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keyText: { fontSize: 22, fontWeight: '600', color: colors.accent },
 });
