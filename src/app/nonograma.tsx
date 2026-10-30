@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { clues, generate, runs } from '@/games/nonograma';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -11,9 +14,10 @@ type Mark = 0 | 1 | 2; // empty, filled, crossed
 
 export default function NonogramaScreen() {
   const { width } = useWindowDimensions();
-  const [n, setN] = useState(5);
-  const [picture, setPicture] = useState(() => generate(5));
-  const [marks, setMarks] = useState<Mark[]>(() => Array(25).fill(0));
+  const { daily, date, seed, saveKey } = useDaily('nonograma');
+  const [n, setN] = useState(daily ? 10 : 5);
+  const [picture, setPicture] = useState(() => (daily ? withSeed(seed, () => generate(10)) : generate(5)));
+  const [marks, setMarks] = useState<Mark[]>(() => Array(daily ? 100 : 25).fill(0));
   const [crossMode, setCrossMode] = useState(false);
   const [finished, setFinished] = useState(false);
 
@@ -28,7 +32,8 @@ export default function NonogramaScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`nonograma:${n}`, finished);
 
-  const loaded = useAutosave('nonograma', { n, picture, marks, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, n, picture, marks, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setN(s.n);
     setPicture(s.picture);
     setMarks(s.marks);
@@ -40,7 +45,8 @@ export default function NonogramaScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`nonograma:${n}`, true, seconds);
-  }, [loaded, solved, finished, n, seconds]);
+    if (daily) recordDaily('nonograma', true, seconds);
+  }, [loaded, solved, finished, n, seconds, daily]);
 
   function newGame(size: number) {
     setN(size);
@@ -63,17 +69,21 @@ export default function NonogramaScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.row}>
-        {SIZES.map((s) => (
-          <Button
-            key={s}
-            label={`${s}×${s}`}
-            variant={s === n ? 'primary' : 'secondary'}
-            onPress={() => newGame(s)}
-            style={{ flex: 1 }}
-          />
-        ))}
-      </View>
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {SIZES.map((s) => (
+            <Button
+              key={s}
+              label={`${s}×${s}`}
+              variant={s === n ? 'primary' : 'secondary'}
+              onPress={() => newGame(s)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.help}>
         Los números indican los bloques de casillas pintadas seguidas en cada fila y columna, en orden.
       </Text>
@@ -122,7 +132,11 @@ export default function NonogramaScreen() {
       <View style={{ width: boardSize, gap: 10 }}>
         {solved && <Banner text={`¡Dibujo completo en ${formatTime(seconds)}! 🎉`} />}
         {solved ? (
-          <Button label="Nuevo nonograma" onPress={() => newGame(n)} />
+          daily ? (
+            <Button label="Jugar partida libre" onPress={() => router.replace('/nonograma')} />
+          ) : (
+            <Button label="Nuevo nonograma" onPress={() => newGame(n)} />
+          )
         ) : (
           <View style={styles.row}>
             <Button

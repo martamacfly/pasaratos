@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { type CellState, conflicts, generate } from '@/games/reinas';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -13,7 +16,8 @@ const emptyBoard = (n: number): CellState[][] => Array.from({ length: n }, () =>
 
 export default function ReinasScreen() {
   const { width } = useWindowDimensions();
-  const [puzzle, setPuzzle] = useState(() => generate(7));
+  const { daily, date, seed, saveKey } = useDaily('reinas');
+  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, () => generate(7)) : generate(7)));
   const [board, setBoard] = useState(() => emptyBoard(7));
   const { n, regions } = puzzle;
   const size = Math.min(width - 32, 460);
@@ -26,7 +30,8 @@ export default function ReinasScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats(`reinas:${n}`, finished);
 
-  const loaded = useAutosave('reinas', { puzzle, board, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, puzzle, board, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setPuzzle(s.puzzle);
     setBoard(s.board);
     setSeconds(s.seconds);
@@ -37,7 +42,8 @@ export default function ReinasScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`reinas:${n}`, true, seconds);
-  }, [loaded, solved, finished, n, seconds]);
+    if (daily) recordDaily('reinas', true, seconds);
+  }, [loaded, solved, finished, n, seconds, daily]);
 
   function newGame(size: number) {
     setPuzzle(generate(size));
@@ -61,17 +67,21 @@ export default function ReinasScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.row}>
-        {SIZES.map((s) => (
-          <Button
-            key={s}
-            label={`${s}×${s}`}
-            variant={s === n ? 'primary' : 'secondary'}
-            onPress={() => newGame(s)}
-            style={{ flex: 1 }}
-          />
-        ))}
-      </View>
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {SIZES.map((s) => (
+            <Button
+              key={s}
+              label={`${s}×${s}`}
+              variant={s === n ? 'primary' : 'secondary'}
+              onPress={() => newGame(s)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.help}>
         Coloca {n} reinas: una por fila, columna y color. Dos reinas no pueden tocarse, ni en diagonal.
         Toca una vez para marcar ✕ y otra para poner 👑.
@@ -110,7 +120,11 @@ export default function ReinasScreen() {
       <View style={{ width: size, gap: 10 }}>
         {solved && <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />}
         {solved ? (
-          <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+          daily ? (
+            <Button label="Jugar partida libre" onPress={() => router.replace('/reinas')} />
+          ) : (
+            <Button label="Nuevo tablero" onPress={() => newGame(n)} />
+          )
         ) : (
           <Button label="Vaciar tablero" variant="secondary" onPress={() => setBoard(emptyBoard(n))} />
         )}

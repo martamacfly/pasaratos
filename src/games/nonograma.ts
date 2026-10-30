@@ -1,3 +1,5 @@
+import { random } from './random';
+
 /** Cells: true = filled. Row-major, n×n. */
 export type Picture = boolean[];
 
@@ -83,7 +85,7 @@ export function lineSolvable(rowClues: number[][], colClues: number[][], n: numb
 
 export function generate(n: number): Picture {
   for (;;) {
-    const p = Array.from({ length: n * n }, () => Math.random() < 0.58);
+    const p = Array.from({ length: n * n }, () => random() < 0.58);
     const { rows, cols } = clues(p, n);
     if (lineSolvable(rows, cols, n)) return p;
   }

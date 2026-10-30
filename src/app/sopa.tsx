@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { generate, lineBetween } from '@/games/sopa';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -17,8 +20,9 @@ const create = (l: Level) => generate(LEVELS[l].size, LEVELS[l].words, LEVELS[l]
 
 export default function SopaScreen() {
   const { width } = useWindowDimensions();
-  const [level, setLevel] = useState<Level>('facil');
-  const [sopa, setSopa] = useState(() => create('facil'));
+  const { daily, date, seed, saveKey } = useDaily('sopa');
+  const [level, setLevel] = useState<Level>(daily ? 'dificil' : 'facil');
+  const [sopa, setSopa] = useState(() => (daily ? withSeed(seed, () => create('dificil')) : create('facil')));
   const [found, setFound] = useState<string[]>([]);
   const [start, setStart] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
@@ -30,7 +34,8 @@ export default function SopaScreen() {
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`sopa:${level}`, finished);
 
-  const loaded = useAutosave('sopa', { level, sopa, found, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, level, sopa, found, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setLevel(s.level);
     setSopa(s.sopa);
     setFound(s.found);
@@ -42,7 +47,8 @@ export default function SopaScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`sopa:${level}`, true, seconds);
-  }, [loaded, solved, finished, level, seconds]);
+    if (daily) recordDaily('sopa', true, seconds);
+  }, [loaded, solved, finished, level, seconds, daily]);
 
   function newGame(l: Level) {
     setLevel(l);
@@ -82,17 +88,21 @@ export default function SopaScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.row}>
-        {(Object.keys(LEVELS) as Level[]).map((l) => (
-          <Button
-            key={l}
-            label={LEVELS[l].label}
-            variant={l === level ? 'primary' : 'secondary'}
-            onPress={() => newGame(l)}
-            style={{ flex: 1 }}
-          />
-        ))}
-      </View>
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {(Object.keys(LEVELS) as Level[]).map((l) => (
+            <Button
+              key={l}
+              label={LEVELS[l].label}
+              variant={l === level ? 'primary' : 'secondary'}
+              onPress={() => newGame(l)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.help}>
         Toca la primera y la última letra de cada palabra.
         {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
@@ -133,7 +143,11 @@ export default function SopaScreen() {
             );
           })}
         </View>
-        <Button label="Nueva sopa" variant={solved ? 'primary' : 'secondary'} onPress={() => newGame(level)} />
+        {daily ? (
+          solved && <Button label="Jugar partida libre" onPress={() => router.replace('/sopa')} />
+        ) : (
+          <Button label="Nueva sopa" variant={solved ? 'primary' : 'secondary'} onPress={() => newGame(level)} />
+        )}
       </View>
     </ScrollView>
   );

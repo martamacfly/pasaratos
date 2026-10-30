@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
 import { keyMarks, type Mark, score } from '@/games/palabra';
-import { pick } from '@/games/random';
+import { pick, withSeed } from '@/games/random';
 import { SOLUTIONS, VALID } from '@/games/words';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
@@ -22,7 +24,8 @@ export default function PalabraScreen() {
   const boardWidth = Math.min(width - 32, 340);
   const tile = (boardWidth - (LENGTH - 1) * 6) / LENGTH;
 
-  const [answer, setAnswer] = useState(() => pick(SOLUTIONS));
+  const { daily, date, seed, saveKey } = useDaily('palabra');
+  const [answer, setAnswer] = useState(() => (daily ? withSeed(seed, () => pick(SOLUTIONS)) : pick(SOLUTIONS)));
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState('');
   const [message, setMessage] = useState('');
@@ -33,7 +36,8 @@ export default function PalabraScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats('palabra', finished);
 
-  const loaded = useAutosave('palabra', { answer, guesses, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, answer, guesses, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setAnswer(s.answer);
     setGuesses(s.guesses);
     setFinished(s.finished);
@@ -43,7 +47,8 @@ export default function PalabraScreen() {
     if (!loaded || !over || finished) return;
     setFinished(true);
     recordResult('palabra', won);
-  }, [loaded, over, finished, won]);
+    if (daily) recordDaily('palabra', won);
+  }, [loaded, over, finished, won, daily]);
 
   function press(key: string) {
     if (over) return;
@@ -91,6 +96,7 @@ export default function PalabraScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {daily && <DailyHeader />}
       {stats && (
         <Text style={styles.stats}>
           Acertadas {stats.won} de {stats.played}
@@ -131,7 +137,11 @@ export default function PalabraScreen() {
       </View>
 
       {over ? (
-        <Button label="Otra palabra" onPress={restart} style={{ width: boardWidth }} />
+        <Button
+          label={daily ? 'Jugar partida libre' : 'Otra palabra'}
+          onPress={daily ? () => router.replace('/palabra') : restart}
+          style={{ width: boardWidth }}
+        />
       ) : (
         <View style={{ gap: 6, width: Math.min(width - 16, 500) }}>
           {KEYBOARD.map((line) => (

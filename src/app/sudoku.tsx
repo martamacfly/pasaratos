@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { type Board, conflicts, type Difficulty, generate, sameUnit } from '@/games/sudoku';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -17,8 +20,9 @@ export default function SudokuScreen() {
   const size = Math.min(width - 32, 460);
   const cell = size / 9;
 
-  const [difficulty, setDifficulty] = useState<Difficulty>('facil');
-  const [game, setGame] = useState(() => generate('facil'));
+  const { daily, date, seed, saveKey } = useDaily('sudoku');
+  const [difficulty, setDifficulty] = useState<Difficulty>(daily ? 'medio' : 'facil');
+  const [game, setGame] = useState(() => (daily ? withSeed(seed, () => generate('medio')) : generate('facil')));
   const [board, setBoard] = useState<Board>(game.puzzle);
   // Pencil marks per cell, as a bitmask of digits 1-9.
   const [notes, setNotes] = useState<number[]>(() => Array(81).fill(0));
@@ -32,7 +36,8 @@ export default function SudokuScreen() {
   const bad = useMemo(() => conflicts(board), [board]);
   const stats = useStats(`sudoku:${difficulty}`, finished);
 
-  const loaded = useAutosave('sudoku', { difficulty, game, board, notes, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, difficulty, game, board, notes, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setDifficulty(s.difficulty);
     setGame(s.game);
     setBoard(s.board);
@@ -45,7 +50,8 @@ export default function SudokuScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult(`sudoku:${difficulty}`, true, seconds);
-  }, [loaded, solved, finished, difficulty, seconds]);
+    if (daily) recordDaily('sudoku', true, seconds);
+  }, [loaded, solved, finished, difficulty, seconds, daily]);
 
   function newGame(d: Difficulty) {
     const g = generate(d);
@@ -77,17 +83,21 @@ export default function SudokuScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.row}>
-        {DIFFICULTIES.map((d) => (
-          <Button
-            key={d.key}
-            label={d.label}
-            variant={d.key === difficulty ? 'primary' : 'secondary'}
-            onPress={() => newGame(d.key)}
-            style={{ flex: 1 }}
-          />
-        ))}
-      </View>
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {DIFFICULTIES.map((d) => (
+            <Button
+              key={d.key}
+              label={d.label}
+              variant={d.key === difficulty ? 'primary' : 'secondary'}
+              onPress={() => newGame(d.key)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.timer}>
         ⏱ {formatTime(seconds)}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
@@ -145,7 +155,11 @@ export default function SudokuScreen() {
       {solved ? (
         <View style={{ width: size, gap: 10 }}>
           <Banner text={`¡Resuelto en ${formatTime(seconds)}! 🎉`} />
-          <Button label="Nueva partida" onPress={() => newGame(difficulty)} />
+          {daily ? (
+            <Button label="Jugar partida libre" onPress={() => router.replace('/sudoku')} />
+          ) : (
+            <Button label="Nueva partida" onPress={() => newGame(difficulty)} />
+          )}
         </View>
       ) : (
         <View style={{ width: size, gap: 10 }}>

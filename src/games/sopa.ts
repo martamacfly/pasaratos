@@ -1,5 +1,5 @@
 import { PISTAS } from './pistas';
-import { shuffle } from './random';
+import { random, shuffle } from './random';
 import { SOLUTIONS } from './words';
 
 export type Placement = { word: string; cells: number[] };
@@ -21,9 +21,9 @@ export function generate(size: number, count: number, backwards: boolean): Sopa 
     if (words.length >= count) break;
     if (words.some((w) => w.word.includes(word) || word.includes(w.word))) continue;
     for (let tries = 0; tries < 60; tries++) {
-      const [dr, dc] = dirs[Math.floor(Math.random() * dirs.length)];
-      const r0 = Math.floor(Math.random() * size);
-      const c0 = Math.floor(Math.random() * size);
+      const [dr, dc] = dirs[Math.floor(random() * dirs.length)];
+      const r0 = Math.floor(random() * size);
+      const c0 = Math.floor(random() * size);
       const cells = [...word].map((_, i) => [r0 + dr * i, c0 + dc * i]);
       if (cells.some(([r, c]) => r < 0 || c < 0 || r >= size || c >= size)) continue;
       const idx = cells.map(([r, c]) => r * size + c);
@@ -34,7 +34,7 @@ export function generate(size: number, count: number, backwards: boolean): Sopa 
     }
   }
 
-  const letters = grid.map((l) => l ?? ALPHABET[Math.floor(Math.random() * ALPHABET.length)]);
+  const letters = grid.map((l) => l ?? ALPHABET[Math.floor(random() * ALPHABET.length)]);
   return { size, letters, words: words.sort((a, b) => a.word.localeCompare(b.word)) };
 }
 

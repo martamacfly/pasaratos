@@ -1,5 +1,5 @@
 import { PISTAS } from './pistas';
-import { shuffle } from './random';
+import { random, shuffle } from './random';
 
 export type Dir = 'across' | 'down';
 export type Entry = { number: number; word: string; clue: string; row: number; col: number; dir: Dir };
@@ -74,7 +74,7 @@ class Builder {
           const row = dir === 'down' ? r - i : r;
           const col = dir === 'across' ? c - i : c;
           const score = this.fits(word, row, col, dir);
-          if (score > bestScore || (score === bestScore && score > 0 && Math.random() < 0.3)) {
+          if (score > bestScore || (score === bestScore && score > 0 && random() < 0.3)) {
             best = { word, clue, row, col, dir };
             bestScore = score;
           }
@@ -90,7 +90,7 @@ function attempt(): Builder {
   const b = new Builder();
   const pool = shuffle(PISTAS);
   const first = pool.find((p) => p.word.length >= 6) ?? pool[0];
-  b.place({ ...first, row: 0, col: 0, dir: Math.random() < 0.5 ? 'across' : 'down' });
+  b.place({ ...first, row: 0, col: 0, dir: random() < 0.5 ? 'across' : 'down' });
   for (const p of pool) {
     if (b.placed.length >= TARGET_WORDS) break;
     if (p === first) continue;

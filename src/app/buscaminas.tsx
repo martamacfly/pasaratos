@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
-import { countAround, flood, type Level, LEVELS, neighbors, placeMines } from '@/games/buscaminas';
+import { countAround, dailyBoard, flood, type Level, LEVELS, neighbors, placeMines } from '@/games/buscaminas';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors } from '@/theme';
 
@@ -21,9 +24,18 @@ const fresh = (level: Level): State => {
   return { level, mines: null, revealed: Array(cells).fill(false), flags: Array(cells).fill(false), lost: false };
 };
 
+const dailyState = (level: Level): State => {
+  const { size, mines: count } = LEVELS[level];
+  const { mines, start } = dailyBoard(size, count);
+  const s = fresh(level);
+  flood(mines, s.revealed, s.flags, start, size).forEach((i) => (s.revealed[i] = true));
+  return { ...s, mines };
+};
+
 export default function BuscaminasScreen() {
   const { width } = useWindowDimensions();
-  const [state, setState] = useState<State>(() => fresh('facil'));
+  const { daily, date, seed, saveKey } = useDaily('buscaminas');
+  const [state, setState] = useState<State>(() => (daily ? withSeed(seed, () => dailyState('medio')) : fresh('facil')));
   const [flagMode, setFlagMode] = useState(false);
   const [finished, setFinished] = useState(false);
   const { level, mines, revealed, flags, lost } = state;
@@ -36,7 +48,8 @@ export default function BuscaminasScreen() {
   const [seconds, setSeconds] = useTimer(mines !== null && !over);
   const stats = useStats(`buscaminas:${level}`, finished);
 
-  const loaded = useAutosave('buscaminas', { state, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, state, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setState(s.state);
     setSeconds(s.seconds);
     setFinished(s.finished);
@@ -46,7 +59,8 @@ export default function BuscaminasScreen() {
     if (!loaded || !over || finished) return;
     setFinished(true);
     recordResult(`buscaminas:${level}`, won, seconds);
-  }, [loaded, over, finished, level, won, seconds]);
+    if (daily) recordDaily('buscaminas', won, seconds);
+  }, [loaded, over, finished, level, won, seconds, daily]);
 
   function newGame(l: Level) {
     setState(fresh(l));
@@ -95,17 +109,21 @@ export default function BuscaminasScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.row}>
-        {(Object.keys(LEVELS) as Level[]).map((l) => (
-          <Button
-            key={l}
-            label={LEVELS[l].label}
-            variant={l === level ? 'primary' : 'secondary'}
-            onPress={() => newGame(l)}
-            style={{ flex: 1 }}
-          />
-        ))}
-      </View>
+      {daily ? (
+        <DailyHeader />
+      ) : (
+        <View style={styles.row}>
+          {(Object.keys(LEVELS) as Level[]).map((l) => (
+            <Button
+              key={l}
+              label={LEVELS[l].label}
+              variant={l === level ? 'primary' : 'secondary'}
+              onPress={() => newGame(l)}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </View>
+      )}
       <Text style={styles.timer}>
         ⏱ {formatTime(seconds)} · 🚩 {flagsLeft}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
@@ -139,7 +157,11 @@ export default function BuscaminasScreen() {
         {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}! 🎉`} />}
         {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina 💥" />}
         {over ? (
-          <Button label="Otra partida" onPress={() => newGame(level)} />
+          daily ? (
+            <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />
+          ) : (
+            <Button label="Otra partida" onPress={() => newGame(level)} />
+          )
         ) : (
           <Button
             label={flagMode ? '🚩 Modo bandera: sí' : '🚩 Modo bandera: no'}

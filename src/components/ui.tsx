@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { dateLabel } from '@/daily';
 import { colors, radius } from '@/theme';
 
 export function Button({
@@ -36,6 +37,15 @@ export function Banner({ text, tone = 'success' }: { text: string; tone?: 'succe
   );
 }
 
+/** Shown instead of the difficulty buttons while playing the daily challenge. */
+export function DailyHeader() {
+  return (
+    <View style={styles.daily}>
+      <Text style={styles.dailyText}>📅 Reto del día · {dateLabel()}</Text>
+    </View>
+  );
+}
+
 export function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -49,4 +59,15 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: '600' },
   banner: { padding: 12, borderRadius: radius, alignItems: 'center' },
   bannerText: { fontSize: 16, fontWeight: '700' },
+  daily: {
+    backgroundColor: '#FFF3BF',
+    borderRadius: radius,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'stretch',
+    maxWidth: 460,
+    width: '100%',
+    alignItems: 'center',
+  },
+  dailyText: { fontSize: 15, fontWeight: '700', color: '#8F6400' },
 });

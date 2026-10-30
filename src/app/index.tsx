@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type DailyLog, dateKey, loadDaily, streak } from '@/daily';
 import { loadStats, type Stats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -27,16 +28,52 @@ function total(all: Record<string, Stats>, id: string) {
 
 export default function Home() {
   const [stats, setStats] = useState<Record<string, Stats>>({});
+  const [daily, setDaily] = useState<DailyLog>({});
 
   useFocusEffect(
     useCallback(() => {
       loadStats().then(setStats);
+      loadDaily().then(setDaily);
     }, []),
   );
 
+  const today = daily[dateKey()] ?? {};
+  const doneToday = Object.keys(today).length;
+  const days = streak(daily);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.subtitle}>Elige un pasatiempo</Text>
+      <View style={styles.daily}>
+        <View style={styles.dailyHeader}>
+          <Text style={styles.dailyTitle}>📅 Reto del día</Text>
+          <Text style={styles.dailyMeta}>
+            {doneToday}/{GAMES.length}
+            {days > 0 && ` · 🔥 ${days} ${days === 1 ? 'día' : 'días'}`}
+          </Text>
+        </View>
+        <Text style={styles.dailyText}>El mismo tablero para todo el mundo. Cambia cada día a medianoche.</Text>
+        <View style={styles.dailyGrid}>
+          {GAMES.map((g) => {
+            const result = today[g.id];
+            return (
+              <Pressable
+                key={g.id}
+                onPress={() => router.push({ pathname: g.href, params: { reto: '1' } })}
+                style={({ pressed }) => [
+                  styles.dailyGame,
+                  result && { backgroundColor: result.won ? colors.successSoft : colors.dangerSoft },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.emoji}>{g.emoji}</Text>
+                <Text style={styles.dailyBadge}>{result ? (result.won ? '✅' : '❌') : ' '}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <Text style={styles.subtitle}>Partida libre</Text>
       {GAMES.map((g) => {
         const t = total(stats, g.id);
         return (
@@ -82,4 +119,20 @@ const styles = StyleSheet.create({
   name: { fontSize: 18, fontWeight: '700', color: colors.text },
   desc: { fontSize: 14, color: colors.muted, marginTop: 2 },
   stats: { fontSize: 13, color: colors.success, fontWeight: '600', marginTop: 4 },
+  daily: { backgroundColor: '#FFF3BF', borderRadius: radius, padding: 14, gap: 8, marginBottom: 8 },
+  dailyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dailyTitle: { fontSize: 18, fontWeight: '800', color: '#8F6400' },
+  dailyMeta: { fontSize: 15, fontWeight: '700', color: '#8F6400' },
+  dailyText: { fontSize: 13, color: '#8F6400' },
+  dailyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dailyGame: {
+    width: '22%',
+    flexGrow: 1,
+    aspectRatio: 1.2,
+    backgroundColor: colors.card,
+    borderRadius: radius,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dailyBadge: { fontSize: 12, marginTop: 2 },
 });

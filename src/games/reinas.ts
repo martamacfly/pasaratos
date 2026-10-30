@@ -1,4 +1,4 @@
-import { shuffle } from './random';
+import { random, shuffle } from './random';
 
 /** regions[r][c] = region id (0..n-1). solution[r] = column of the queen in row r. */
 export type Puzzle = { n: number; regions: number[][]; solution: number[] };
@@ -28,8 +28,8 @@ function growRegions(n: number, queens: number[]): number[][] {
   queens.forEach((c, r) => (regions[r][c] = r));
   let left = n * n - n;
   while (left > 0) {
-    const r = Math.floor(Math.random() * n);
-    const c = Math.floor(Math.random() * n);
+    const r = Math.floor(random() * n);
+    const c = Math.floor(random() * n);
     if (regions[r][c] === -1) continue;
     const [dr, dc] = shuffle([[0, 1], [1, 0], [0, -1], [-1, 0]])[0];
     const nr = r + dr;

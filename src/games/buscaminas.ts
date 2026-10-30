@@ -1,4 +1,4 @@
-import { shuffle } from './random';
+import { random, shuffle } from './random';
 
 export type Level = 'facil' | 'medio' | 'dificil';
 export const LEVELS: Record<Level, { size: number; mines: number; label: string }> = {
@@ -28,6 +28,15 @@ export function placeMines(size: number, mines: number, safe: number): boolean[]
   const result = Array(size * size).fill(false);
   candidates.slice(0, mines).forEach((i) => (result[i] = true));
   return result;
+}
+
+/**
+ * Daily board: the mines can't depend on where each player taps first, so the seed fixes
+ * both the mines and a safe starting cell that the screen opens for the player.
+ */
+export function dailyBoard(size: number, mines: number): { mines: boolean[]; start: number } {
+  const start = Math.floor(random() * size * size);
+  return { mines: placeMines(size, mines, start), start };
 }
 
 export function countAround(mines: boolean[], i: number, size: number) {

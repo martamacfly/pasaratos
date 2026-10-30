@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Banner, Button, formatTime } from '@/components/ui';
+import { router } from 'expo-router';
+import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { recordDaily, useDaily } from '@/daily';
+import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { cellsOf, type Dir, type Entry, generate } from '@/games/crucigrama';
 import { recordResult, useAutosave, useStats } from '@/storage';
@@ -10,7 +13,8 @@ const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 
 export default function CrucigramaScreen() {
   const { width } = useWindowDimensions();
-  const [puzzle, setPuzzle] = useState(generate);
+  const { daily, date, seed, saveKey } = useDaily('crucigrama');
+  const [puzzle, setPuzzle] = useState(() => (daily ? withSeed(seed, generate) : generate()));
   const { rows, cols, grid, entries } = puzzle;
   const [letters, setLetters] = useState<string[][]>(() => grid.map((r) => r.map(() => '')));
   const [pos, setPos] = useState<[number, number]>([entries[0].row, entries[0].col]);
@@ -25,7 +29,8 @@ export default function CrucigramaScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats('crucigrama', finished);
 
-  const loaded = useAutosave('crucigrama', { puzzle, letters, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, puzzle, letters, seconds, finished }, (s) => {
+    if (daily && s.date !== date) return;
     setPuzzle(s.puzzle);
     setLetters(s.letters);
     setPos([s.puzzle.entries[0].row, s.puzzle.entries[0].col]);
@@ -38,7 +43,8 @@ export default function CrucigramaScreen() {
     if (!loaded || !solved || finished) return;
     setFinished(true);
     recordResult('crucigrama', true, seconds);
-  }, [loaded, solved, finished, seconds]);
+    if (daily) recordDaily('crucigrama', true, seconds);
+  }, [loaded, solved, finished, seconds, daily]);
 
   const entryAt = (r: number, c: number, d: Dir) =>
     entries.find((e) => e.dir === d && cellsOf(e).some(([er, ec]) => er === r && ec === c));
@@ -114,6 +120,7 @@ export default function CrucigramaScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {daily && <DailyHeader />}
       <Text style={styles.timer}>
         ⏱ {formatTime(seconds)}
         {stats?.best !== undefined && ` · 🏆 ${formatTime(stats.best)}`}
@@ -155,7 +162,11 @@ export default function CrucigramaScreen() {
       {solved ? (
         <View style={{ width: gridWidth, gap: 10 }}>
           <Banner text={`¡Crucigrama completo en ${formatTime(seconds)}! 🎉`} />
-          <Button label="Nuevo crucigrama" onPress={newGame} />
+          {daily ? (
+            <Button label="Jugar partida libre" onPress={() => router.replace('/crucigrama')} />
+          ) : (
+            <Button label="Nuevo crucigrama" onPress={newGame} />
+          )}
         </View>
       ) : (
         <>
@@ -208,7 +219,7 @@ export default function CrucigramaScreen() {
             })}
           </View>
         ))}
-        {!solved && <Button label="Nuevo crucigrama" variant="secondary" onPress={newGame} />}
+        {!solved && !daily && <Button label="Nuevo crucigrama" variant="secondary" onPress={newGame} />}
       </View>
     </ScrollView>
   );
