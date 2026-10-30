@@ -8,7 +8,7 @@ import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { groupOf, PUZZLES } from '@/games/grupos';
 import { random, shuffle, withSeed } from '@/games/random';
-import { completeLevel, LEVEL_COUNT } from '@/levels';
+import { completeLevel } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -89,7 +89,7 @@ export default function GruposScreen() {
     setMessage(most === 3 ? '¡Casi! Te falta una' : 'No es un grupo');
   }
 
-  const nextStage = Math.min(stage + 1, LEVEL_COUNT);
+  const nextStage = Math.min(stage + 1, PUZZLES.length);
 
   if (!loaded) return null;
 
@@ -108,7 +108,9 @@ export default function GruposScreen() {
               Ganadas {stats.won} de {stats.played}
             </Text>
           )}
-          {!daily && <LevelBar game="grupos" variant={'todos'} level={stage} onPick={(s) => newGame(s)} />}
+          {!daily && (
+            <LevelBar game="grupos" variant={'todos'} level={stage} count={PUZZLES.length} onPick={(s) => newGame(s)} />
+          )}
         </>
       }
       board={

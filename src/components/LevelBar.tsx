@@ -13,18 +13,21 @@ export function LevelBar({
   game,
   variant,
   level,
+  count = LEVEL_COUNT,
   onPick,
 }: {
   game: string;
   variant: string | number;
   level: number;
+  /** How many levels there are, when a game has its own number. */
+  count?: number;
   onPick: (level: number) => void;
 }) {
   const theme = useGameTheme();
   const done = useLevelProgress(game, variant);
   const [open, setOpen] = useState(false);
   const canPrev = level > 1;
-  const canNext = level < LEVEL_COUNT && isUnlocked(done, level + 1);
+  const canNext = level < count && isUnlocked(done, level + 1);
 
   return (
     <View style={styles.wrap}>
@@ -34,7 +37,7 @@ export function LevelBar({
         </Pressable>
         <Pressable onPress={() => setOpen((o) => !o)} style={[styles.current, { backgroundColor: theme.soft }]}>
           <Text style={[styles.currentText, { color: theme.main }]}>
-            Nivel {level} de {LEVEL_COUNT}
+            Nivel {level} de {count}
           </Text>
           <Text style={styles.progressText}>
             {done.length} completados · {open ? 'ocultar' : 'ver todos'}
@@ -47,7 +50,7 @@ export function LevelBar({
 
       {open && (
         <View style={styles.grid}>
-          {Array.from({ length: LEVEL_COUNT }, (_, k) => k + 1).map((n) => {
+          {Array.from({ length: count }, (_, k) => k + 1).map((n) => {
             const completed = done.includes(n);
             const unlocked = isUnlocked(done, n);
             return (

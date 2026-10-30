@@ -8,7 +8,11 @@ export type Crossword = { rows: number; cols: number; grid: (string | null)[][];
 type Placed = { word: string; clue: string; row: number; col: number; dir: Dir };
 
 class Builder {
-  constructor(private maxSize: number) {}
+  maxSize: number;
+
+  constructor(maxSize: number) {
+    this.maxSize = maxSize;
+  }
 
   cells = new Map<string, { letter: string; across: boolean; down: boolean }>();
   placed: Placed[] = [];
