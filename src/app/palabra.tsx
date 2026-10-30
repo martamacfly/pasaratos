@@ -65,8 +65,19 @@ export default function PalabraScreen() {
     setFinished(true);
     recordResult('palabra', won);
     if (!daily) completeLevel('palabra', level, stage);
-    if (daily) recordDaily('palabra', won);
-  }, [loaded, over, finished, won, daily, stage]);
+    if (daily) {
+      // Coloured squares of every guess, without the letters, for sharing.
+      const squares: Record<Mark, string> = { correct: '🟩', present: '🟨', absent: '⬜' };
+      const grid = guesses
+        .map((g) =>
+          score(g, answer)
+            .map((m) => squares[m])
+            .join(''),
+        )
+        .join('\n');
+      recordDaily('palabra', won, undefined, grid);
+    }
+  }, [loaded, over, finished, won, daily, stage, guesses, answer]);
 
   function press(key: string) {
     if (over) return;

@@ -1,6 +1,9 @@
+import { usePathname } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { dateLabel } from '@/daily';
+import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
+import { share } from '@/share';
 import { colors } from '@/theme';
 
 /** Buttons take the colour of the game on screen. */
@@ -63,13 +66,45 @@ export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: n
   );
 }
 
-/** Shown instead of the difficulty buttons while playing the daily challenge. */
+/** Shares `text` and briefly says on the button whether it was shared or copied. */
+export function ShareButton({
+  text,
+  label = 'Compartir resultado',
+  style,
+}: {
+  text: string;
+  label?: string;
+  style?: ViewStyle;
+}) {
+  const [feedback, setFeedback] = useState<string | null>(null);
+  async function onPress() {
+    const result = await share(text);
+    setFeedback(
+      result === 'copied'
+        ? '¡Copiado! Pégalo donde quieras'
+        : result === 'shared'
+          ? '¡Compartido!'
+          : 'No se pudo compartir',
+    );
+    setTimeout(() => setFeedback(null), 2500);
+  }
+  return <Button label={feedback ?? label} onPress={onPress} style={style} />;
+}
+
+/**
+ * Shown instead of the difficulty buttons while playing the daily challenge. Once today's
+ * challenge of this game is done, it offers to share the result.
+ */
 export function DailyHeader() {
   const theme = useGameTheme();
+  const game = usePathname().split('/').filter(Boolean).pop() ?? '';
+  const log = useDailyLog();
+  const done = log[dateKey()]?.[game];
   return (
     <View style={[styles.daily, { backgroundColor: theme.soft }]}>
       <Text style={[styles.dailyLabel, { color: theme.main }]}>RETO DEL DÍA</Text>
       <Text style={styles.dailyText}>{dateLabel()}</Text>
+      {done && <ShareButton text={shareText(log, game)} style={{ alignSelf: 'stretch', marginTop: 6 }} />}
     </View>
   );
 }
@@ -81,7 +116,13 @@ export function formatTime(seconds: number) {
 }
 
 const styles = StyleSheet.create({
-  button: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   primary: { shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
   secondary: { backgroundColor: colors.card, borderWidth: 2 },
   label: { fontSize: 15, fontWeight: '800' },

@@ -4,92 +4,12 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { CheckGlyph, CrossGlyph, GameIcon, Glyph } from '@/components/icons';
-import { type DailyLog, dateKey, dateLabel, loadDaily, streak } from '@/daily';
+import { ShareButton } from '@/components/ui';
+import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
+import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
 import { loadStats, type Stats } from '@/storage';
 import { colors, radius } from '@/theme';
 
-type Game = { id: string; href: string; name: string; desc: string };
-
-const SECTIONS: { title: string; games: Game[] }[] = [
-  {
-    title: 'Números',
-    games: [
-      { id: 'sudoku', href: '/sudoku', name: 'Sudoku', desc: 'Rellena la cuadrícula 9×9 sin repetir números.' },
-      {
-        id: 'futoshiki',
-        href: '/futoshiki',
-        name: 'Futoshiki',
-        desc: 'Números sin repetir que respetan los signos < y >.',
-      },
-      {
-        id: 'calcudoku',
-        href: '/calcudoku',
-        name: 'Calcudoku',
-        desc: 'Cada zona debe dar su suma, resta, producto o división.',
-      },
-      {
-        id: 'binario',
-        href: '/binario',
-        name: 'Binario',
-        desc: 'Soles y lunas a partes iguales, nunca tres seguidos.',
-      },
-    ],
-  },
-  {
-    title: 'Palabras',
-    games: [
-      {
-        id: 'palabra',
-        href: '/palabra',
-        name: 'Palabra oculta',
-        desc: 'Adivina la palabra de 5 letras en 6 intentos.',
-      },
-      {
-        id: 'crucigrama',
-        href: '/crucigrama',
-        name: 'Crucigrama',
-        desc: 'Completa las palabras a partir de sus pistas.',
-      },
-      { id: 'sopa', href: '/sopa', name: 'Sopa de letras', desc: 'Encuentra todas las palabras escondidas.' },
-      { id: 'grupos', href: '/grupos', name: 'Grupos de 4', desc: 'Separa 16 palabras en 4 grupos con algo en común.' },
-      {
-        id: 'autodefinido',
-        href: '/autodefinido',
-        name: 'Autodefinido',
-        desc: 'Crucigrama con las pistas dentro de la cuadrícula.',
-      },
-    ],
-  },
-  {
-    title: 'Lógica y trazos',
-    games: [
-      { id: 'reinas', href: '/reinas', name: 'Reinas', desc: 'Una reina por fila, columna y color. Sin tocarse.' },
-      { id: 'buscaminas', href: '/buscaminas', name: 'Buscaminas', desc: 'Despeja el campo sin pisar ninguna mina.' },
-      {
-        id: 'nonograma',
-        href: '/nonograma',
-        name: 'Nonograma',
-        desc: 'Pinta casillas según los números y descubre el dibujo.',
-      },
-      {
-        id: 'camino',
-        href: '/camino',
-        name: 'Camino numerado',
-        desc: 'Una sola línea por todas las casillas, con los números en orden.',
-      },
-      {
-        id: 'colores',
-        href: '/colores',
-        name: 'Conectar colores',
-        desc: 'Une las parejas de colores llenando el tablero.',
-      },
-    ],
-  },
-];
-const ALL_GAMES = SECTIONS.flatMap((s) => s.games);
-
-// Games that can be lost show "won of played"; the rest only count solved puzzles.
-const CAN_LOSE = new Set<string>(['palabra', 'buscaminas', 'grupos']);
 const MAX_WIDTH = 1000;
 
 /** Adds up the stats of every variant of a game (e.g. "sudoku:facil", "sudoku:medio"). */
@@ -189,6 +109,7 @@ export default function Home() {
               );
             })}
           </View>
+          {doneToday > 0 && <ShareButton text={shareText(daily)} label="Compartir mi día" />}
         </View>
 
         {SECTIONS.map((section) => (
