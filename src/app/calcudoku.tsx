@@ -5,17 +5,18 @@ import { Text } from '@/components/AppText';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { cageConflicts, generate } from '@/games/calcudoku';
-import { latinConflicts } from '@/games/latin';
+import { latinConflicts, withWrong } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { useUndo } from '@/hooks/useUndo';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
+import { useSettings } from '@/settings';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
 const SIZES = [4, 5, 6, 7];
 
@@ -39,7 +40,12 @@ export default function CalcudokuScreen() {
     cages.forEach((c, k) => c.cells.forEach((i) => (owner[i] = k)));
     return owner;
   }, [cages, n]);
-  const bad = useMemo(() => new Set([...latinConflicts(board, n), ...cageConflicts(board, cages)]), [board, n, cages]);
+  const { showErrors } = useSettings();
+  // With "show errors" on, any number that doesn't match the solution is shown as wrong too.
+  const bad = useMemo(() => {
+    const found = new Set([...latinConflicts(board, n), ...cageConflicts(board, cages)]);
+    return showErrors ? withWrong(found, board, solution) : found;
+  }, [board, n, cages, showErrors, solution]);
   const solved = board.every((v, i) => v === solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`calcudoku:${n}`, finished);
@@ -95,7 +101,7 @@ export default function CalcudokuScreen() {
   // lines inside a cage are thin and light so the cages stand out.
   const edge = (i: number, j: number, inside: boolean) => {
     const cage = !inside || cageOf[i] !== cageOf[j];
-    return { width: !inside ? 2.5 : cage ? 1.5 : 0.5, color: cage ? colors.text : '#D6D3CC' };
+    return { width: !inside ? 2.5 : cage ? 1.5 : 0.5, color: cage ? colors.text : tone('#D6D3CC') };
   };
   const borders = (i: number, r: number, c: number) => {
     const t = edge(i, i - n, r > 0);
@@ -137,10 +143,7 @@ export default function CalcudokuScreen() {
             Números del 1 al {n} sin repetir en filas ni columnas. Cada zona marcada debe dar su resultado con la
             operación indicada.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="calcudoku" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }

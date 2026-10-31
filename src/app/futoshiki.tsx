@@ -4,17 +4,18 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { generate, ineqConflicts } from '@/games/futoshiki';
-import { latinConflicts } from '@/games/latin';
+import { latinConflicts, withWrong } from '@/games/latin';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { useUndo } from '@/hooks/useUndo';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
+import { useSettings } from '@/settings';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
 type Level = 'facil' | 'medio' | 'dificil';
 // 6×6 takes seconds to generate, so the hardest level is a 5×5 with the fewest signs possible.
@@ -46,7 +47,12 @@ export default function FutoshikiScreen() {
   const cell = boardSize / (n + (n - 1) * 0.45);
   const gap = cell * 0.45;
 
-  const bad = useMemo(() => new Set([...latinConflicts(board, n), ...ineqConflicts(board, ineqs)]), [board, n, ineqs]);
+  const { showErrors } = useSettings();
+  // With "show errors" on, any number that doesn't match the solution is shown as wrong too.
+  const bad = useMemo(() => {
+    const found = new Set([...latinConflicts(board, n), ...ineqConflicts(board, ineqs)]);
+    return showErrors ? withWrong(found, board, solution) : found;
+  }, [board, n, ineqs, showErrors, solution]);
   const solved = board.every((v, i) => v === solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`futoshiki:${level}`, finished);
@@ -128,10 +134,7 @@ export default function FutoshikiScreen() {
           <Text style={styles.help}>
             Rellena con números del 1 al {n} sin repetir en filas ni columnas, respetando los signos {'<'} y {'>'}.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="futoshiki" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -149,7 +152,7 @@ export default function FutoshikiScreen() {
                         style={[
                           styles.cell,
                           { width: cell, height: cell },
-                          givens[i] !== 0 && { backgroundColor: '#ECEAE4' },
+                          givens[i] !== 0 && { backgroundColor: tone('#ECEAE4') },
                           i === selected && { backgroundColor: theme.main + '40', borderColor: theme.main },
                         ]}
                       >
@@ -240,5 +243,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gap: { alignItems: 'center', justifyContent: 'center' },
-  sign: { fontWeight: '800', color: '#E8590C' },
+  sign: { fontWeight: '800', color: tone('#E8590C') },
 });

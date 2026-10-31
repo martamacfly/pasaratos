@@ -5,14 +5,14 @@ import { Text } from '@/components/AppText';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { feedback, generate, type Level, LEVELS, PEG_COLORS, TRIES } from '@/games/codigo';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, dark, tone } from '@/theme';
 
 export default function CodigoScreen() {
   const { board: size, panel } = useGameSizes(400);
@@ -136,10 +136,9 @@ export default function CodigoScreen() {
             {LEVELS[level].repeat ? ' (pueden repetirse)' : ' (sin repetir)'}. Tras cada intento: punto negro, color en
             su sitio; punto blanco, color que está pero en otro sitio.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · Intento {over ? guesses.length : guesses.length + 1}/{TRIES}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            Intento {over ? guesses.length : guesses.length + 1}/{TRIES}
+          </TimerText>
           {!daily && <LevelBar game="codigo" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -180,7 +179,7 @@ export default function CodigoScreen() {
                         height: peg,
                         borderRadius: peg / 2,
                         backgroundColor: PEG_COLORS[c],
-                        borderColor: '#fff',
+                        borderColor: colors.card,
                       },
                     ]}
                   />
@@ -268,8 +267,8 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: '#DEE2E6',
-    backgroundColor: '#F8F9FA',
+    borderColor: tone('#DEE2E6'),
+    backgroundColor: tone('#F8F9FA'),
   },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
@@ -293,14 +292,14 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
   },
-  currentRow: { backgroundColor: '#F1F3F5' },
-  secretRow: { backgroundColor: '#343A40' },
+  currentRow: { backgroundColor: tone('#F1F3F5') },
+  secretRow: { backgroundColor: dark ? '#0B0C0F' : '#343A40' },
   secretLabel: { color: '#fff', fontWeight: '800', fontSize: 12 },
-  peg: { borderWidth: 2, borderColor: '#DEE2E6', backgroundColor: '#F8F9FA' },
+  peg: { borderWidth: 2, borderColor: tone('#DEE2E6'), backgroundColor: tone('#F8F9FA') },
   pegs: { flexDirection: 'row', flexWrap: 'wrap', gap: 3, justifyContent: 'center' },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E9ECEF' },
-  dotExact: { backgroundColor: '#212529' },
-  dotNear: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#212529' },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: tone('#E9ECEF') },
+  dotExact: { backgroundColor: tone('#212529') },
+  dotNear: { backgroundColor: dark ? 'transparent' : '#fff', borderWidth: 2, borderColor: tone('#212529') },
   palette: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  swatch: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, borderColor: '#fff' },
+  swatch: { width: 46, height: 46, borderRadius: 23, borderWidth: 3, borderColor: colors.card },
 });

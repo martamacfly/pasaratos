@@ -6,7 +6,7 @@ import { PathLines } from '@/components/PathLines';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { adjacent, type Colores, coloresSolved, generateColores } from '@/games/caminos';
 import { withSeed } from '@/games/random';
@@ -14,10 +14,12 @@ import { useGridDrag } from '@/hooks/useGridDrag';
 import { useTimer } from '@/hooks/useTimer';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colorblind, colors, radius, SAFE_COLORS } from '@/theme';
 
 const SIZES = [5, 6, 7, 8, 9];
-const PALETTE = ['#E03131', '#1971C2', '#2F9E44', '#F08C00', '#9C36B5', '#0C8599', '#D6336C', '#5C940D'];
+const PALETTE = colorblind
+  ? SAFE_COLORS
+  : ['#E03131', '#1971C2', '#2F9E44', '#F08C00', '#9C36B5', '#0C8599', '#D6336C', '#5C940D'];
 
 type Drawing = { lines: number[][]; active: number | null };
 const emptyDrawing = (p: Colores): Drawing => ({ lines: p.pairs.map(() => []), active: null });
@@ -157,10 +159,9 @@ export default function ColoresScreen() {
             Une cada pareja de puntos del mismo color arrastrando el dedo. Las líneas no se cruzan y deben llenar todo
             el tablero.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · Parejas {joined}/{pairs.length}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            Parejas {joined}/{pairs.length}
+          </TimerText>
           {!daily && <LevelBar game="colores" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }

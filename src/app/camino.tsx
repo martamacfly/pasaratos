@@ -6,7 +6,7 @@ import { PathLines } from '@/components/PathLines';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { adjacent, caminoSolved, generateCamino } from '@/games/caminos';
@@ -130,10 +130,9 @@ export default function CaminoScreen() {
           <Text style={styles.help}>
             Arrastra desde el 1 una línea que pase por todas las casillas y por los números en orden hasta el {last}.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · {path.length}/{n * n}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            {path.length}/{n * n}
+          </TimerText>
           {!daily && <LevelBar game="camino" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
@@ -171,7 +170,7 @@ export default function CaminoScreen() {
                     i === head && { borderWidth: 3, borderColor: colors.warning },
                   ]}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
+                  <Text style={{ color: colors.card, fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
                 </View>
               );
             })}

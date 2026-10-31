@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react';
 import { Text as RNText, StyleSheet, type TextProps } from 'react-native';
 
 // Nunito is loaded as one font family per weight (see the root layout).
@@ -21,16 +22,27 @@ export function fontFor(weight?: string | number) {
   return FONTS.regular;
 }
 
+/** How much bigger text is drawn ("large text" setting). Boards set it back to 1 so they keep their fit. */
+export const TextScaleContext = createContext(1);
+
 /**
  * Drop-in replacement for React Native's Text that writes in Nunito. The weight in the style
  * picks the matching Nunito family, and is then reset so the platform doesn't fake a bolder one.
  */
 export function Text(props: TextProps) {
+  const scale = useContext(TextScaleContext);
   const flat = StyleSheet.flatten(props.style) ?? {};
+  const scaled =
+    scale === 1
+      ? {}
+      : {
+          fontSize: (flat.fontSize ?? 14) * scale,
+          ...(typeof flat.lineHeight === 'number' && { lineHeight: flat.lineHeight * scale }),
+        };
   return (
     <RNText
       {...props}
-      style={[props.style, { fontFamily: flat.fontFamily ?? fontFor(flat.fontWeight), fontWeight: 'normal' }]}
+      style={[props.style, { fontFamily: flat.fontFamily ?? fontFor(flat.fontWeight), fontWeight: 'normal' }, scaled]}
     />
   );
 }

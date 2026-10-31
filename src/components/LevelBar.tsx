@@ -4,9 +4,11 @@ import { Text } from '@/components/AppText';
 import { BoardCoverContext } from '@/components/GameLayout';
 import { CheckGlyph, Glyph, LockGlyph } from '@/components/icons';
 import { Button } from '@/components/ui';
+import { confirm } from '@/confirm';
 import { useGameTheme } from '@/gameTheme';
 import { isUnlocked, LEVEL_COUNT, useLevelProgress } from '@/levels';
-import { colors } from '@/theme';
+import { useSettings } from '@/settings';
+import { colors, tone } from '@/theme';
 
 /**
  * "Nivel N" with arrows to move between open levels, a button to restart the current one from
@@ -30,6 +32,16 @@ export function LevelBar({
   onPick: (level: number) => void;
 }) {
   const theme = useGameTheme();
+  const settings = useSettings();
+  const restart = () =>
+    settings.confirmRestart
+      ? confirm(
+          '¿Reiniciar el nivel?',
+          'Se borrará lo que llevas hecho en esta partida.',
+          () => onPick(level),
+          'Reiniciar',
+        )
+      : onPick(level);
   const [done, loaded] = useLevelProgress(game, variant);
   const setCover = useContext(BoardCoverContext);
   // The level the cover was last decided for, so finishing a level doesn't hide the solved board.
@@ -108,7 +120,7 @@ export function LevelBar({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Reiniciar nivel"
-          onPress={() => onPick(level)}
+          onPress={restart}
           style={({ pressed }) => [styles.arrow, styles.restart, pressed && { opacity: 0.7 }]}
         >
           <Text style={[styles.restartIcon, { color: theme.main }]}>↺</Text>
@@ -202,10 +214,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: colors.card,
     borderWidth: 2,
-    borderColor: '#DEE2E6',
+    borderColor: tone('#DEE2E6'),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  locked: { backgroundColor: '#F1F3F5' },
+  locked: { backgroundColor: tone('#F1F3F5') },
   dotText: { fontSize: 15, fontWeight: '800', color: colors.text },
 });

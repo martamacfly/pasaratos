@@ -5,14 +5,14 @@ import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { CheckGlyph, CrossGlyph, GameIcon, Glyph, MedalGlyph } from '@/components/icons';
+import { CheckGlyph, CrossGlyph, GameIcon, GearGlyph, Glyph, MedalGlyph } from '@/components/icons';
 import { loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
 import { STARTING_HINTS } from '@/hints';
 import { loadStats, type Stats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 const MAX_WIDTH = 1240;
 
@@ -71,18 +71,30 @@ export default function Home() {
               <Text style={styles.tagline}>Pasatiempos para cada rato</Text>
             </View>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/logros')}
-            style={({ pressed }) => [styles.medals, pressed && { opacity: 0.8 }]}
-          >
-            <Glyph size={26}>
-              <MedalGlyph ink="#F2B705" />
-            </Glyph>
-            <Text style={styles.medalsText}>
-              {medals.unlocked}/{medals.total}
-            </Text>
-          </Pressable>
+          <View style={styles.heroButtons}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/logros')}
+              style={({ pressed }) => [styles.medals, pressed && { opacity: 0.8 }]}
+            >
+              <Glyph size={26}>
+                <MedalGlyph ink="#F2B705" />
+              </Glyph>
+              <Text style={styles.medalsText}>
+                {medals.unlocked}/{medals.total}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ajustes"
+              onPress={() => router.push('/ajustes')}
+              style={({ pressed }) => [styles.medals, styles.gear, pressed && { opacity: 0.8 }]}
+            >
+              <Glyph size={24}>
+                <GearGlyph ink="#fff" />
+              </Glyph>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -173,8 +185,9 @@ const styles = StyleSheet.create({
   hero: { paddingBottom: 80, alignItems: 'center', overflow: 'hidden' },
   inner: { alignSelf: 'center' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  heroButtons: { marginLeft: 'auto', flexDirection: 'row', gap: 8 },
+  gear: { paddingHorizontal: 8 },
   medals: {
-    marginLeft: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -205,16 +218,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFF4E6',
+    backgroundColor: tone('#FFF4E6'),
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 10,
   },
-  streakNumber: { fontSize: 24, fontWeight: '900', color: '#E8590C' },
-  streakLabel: { fontSize: 11, lineHeight: 13, fontWeight: '700', color: '#E8590C' },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: '#EDF2FF', overflow: 'hidden' },
+  streakNumber: { fontSize: 24, fontWeight: '900', color: tone('#E8590C') },
+  streakLabel: { fontSize: 11, lineHeight: 13, fontWeight: '700', color: tone('#E8590C') },
+  progressTrack: { height: 8, borderRadius: 4, backgroundColor: tone('#EDF2FF'), overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 4, backgroundColor: colors.accent },
-  hintText: { fontSize: 13, color: '#E67700', fontWeight: '600' },
+  hintText: { fontSize: 13, color: tone('#E67700'), fontWeight: '600' },
   progressText: { fontSize: 13, color: colors.muted },
   dailyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   badge: {
@@ -227,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: colors.card,
   },
   section: {
     fontSize: 13,
@@ -244,7 +257,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#ECE9E2',
+    borderColor: tone('#ECE9E2'),
     shadowColor: '#1B2559',
     shadowOpacity: 0.06,
     shadowRadius: 10,

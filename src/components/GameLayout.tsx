@@ -2,6 +2,8 @@ import { createContext, type ReactNode, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { Confetti } from '@/components/Confetti';
+import { getSettings } from '@/settings';
+import { dark } from '@/theme';
 
 /**
  * Lets something inside the page (the level bar) lay a card over the board, e.g. to say that the
@@ -59,7 +61,7 @@ export function GameLayout({
   const openedAt = useRef(Date.now());
   // A game that was already won shows its banner as soon as it is reopened: no confetti for that.
   const celebrate = () => {
-    if (Date.now() - openedAt.current > 1500) setBurst(Date.now());
+    if (getSettings().confetti && Date.now() - openedAt.current > 1500) setBurst(Date.now());
   };
   const boardWithCover = (
     <View>
@@ -116,7 +118,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.88)',
+    backgroundColor: dark ? 'rgba(20,22,27,0.9)' : 'rgba(255,255,255,0.88)',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
   panel: {
     gap: 14,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: dark ? 'rgba(34,37,45,0.7)' : 'rgba(255,255,255,0.6)',
     borderRadius: 20,
     padding: PANEL_PADDING,
   },

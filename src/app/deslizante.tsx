@@ -5,7 +5,7 @@ import { Text } from '@/components/AppText';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { type Board, generate, isSolved, slide } from '@/games/deslizante';
@@ -93,10 +93,9 @@ export default function DeslizanteScreen() {
           <Text style={styles.help}>
             Ordena los números del 1 al {n * n - 1}. Toca una ficha de la fila o columna del hueco para deslizarla.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · Movimientos {moves}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            Movimientos {moves}
+          </TimerText>
           {!daily && <LevelBar game="deslizante" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }

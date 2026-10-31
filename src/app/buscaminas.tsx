@@ -6,16 +6,26 @@ import { FlagGlyph, Glyph, MineGlyph } from '@/components/icons';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { countAround, dailyBoard, flood, type Level, LEVELS, neighbors, placeMines } from '@/games/buscaminas';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
-const NUMBER_COLORS = ['', '#1971C2', '#2F9E44', '#E03131', '#5F3DC4', '#C92A2A', '#0C8599', '#212529', '#868E96'];
+const NUMBER_COLORS = [
+  '',
+  tone('#1971C2'),
+  tone('#2F9E44'),
+  tone('#E03131'),
+  tone('#5F3DC4'),
+  tone('#C92A2A'),
+  tone('#0C8599'),
+  tone('#212529'),
+  tone('#868E96'),
+];
 
 type State = {
   level: Level;
@@ -151,10 +161,9 @@ export default function BuscaminasScreen() {
               ))}
             </View>
           )}
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · Minas {flagsLeft}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            Minas {flagsLeft}
+          </TimerText>
           {!daily && <LevelBar game="buscaminas" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -233,7 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
   },
-  cell: { alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: '#B8B4AA' },
-  closed: { backgroundColor: '#C9D3E6' },
+  cell: { alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: tone('#B8B4AA') },
+  closed: { backgroundColor: tone('#C9D3E6') },
   open: { backgroundColor: colors.card },
 });

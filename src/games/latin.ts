@@ -36,3 +36,9 @@ export function latinAllowed(grid: number[], n: number, i: number, v: number) {
   }
   return true;
 }
+
+/** Adds to `bad` the filled cells (non-zero) that don't match the solution. For the "show errors" setting. */
+export function withWrong(bad: Set<number>, grid: number[], solution: number[]): Set<number> {
+  grid.forEach((v, i) => v !== 0 && v !== solution[i] && bad.add(i));
+  return bad;
+}

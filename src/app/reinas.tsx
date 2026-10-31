@@ -6,7 +6,7 @@ import { CrownGlyph, Glyph } from '@/components/icons';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
@@ -14,19 +14,19 @@ import { useUndo } from '@/hooks/useUndo';
 import { type CellState, conflicts, generate } from '@/games/reinas';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
 const SIZES = [5, 6, 7, 8];
 const REGION_COLORS = [
-  '#FFC9C9',
-  '#FFD8A8',
-  '#FFEC99',
-  '#C0EB75',
-  '#96F2D7',
-  '#A5D8FF',
-  '#D0BFFF',
-  '#FCC2D7',
-  '#CED4DA',
+  tone('#FFC9C9'),
+  tone('#FFD8A8'),
+  tone('#FFEC99'),
+  tone('#C0EB75'),
+  tone('#96F2D7'),
+  tone('#A5D8FF'),
+  tone('#D0BFFF'),
+  tone('#FCC2D7'),
+  tone('#CED4DA'),
 ];
 
 const emptyBoard = (n: number): CellState[][] => Array.from({ length: n }, () => Array(n).fill(0));
@@ -125,10 +125,9 @@ export default function ReinasScreen() {
             Coloca {n} reinas: una por fila, columna y color. Dos reinas no pueden tocarse, ni en diagonal. Toca una vez
             para marcar ✕ y otra para poner la reina.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · Reinas {queens}/{n}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            Reinas {queens}/{n}
+          </TimerText>
           {!daily && <LevelBar game="reinas" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
@@ -153,10 +152,10 @@ export default function ReinasScreen() {
                     },
                   ]}
                 >
-                  {s === 1 && <Text style={{ fontSize: cell * 0.35, color: '#495057' }}>✕</Text>}
+                  {s === 1 && <Text style={{ fontSize: cell * 0.35, color: tone('#495057') }}>✕</Text>}
                   {s === 2 && (
                     <Glyph size={cell * 0.62}>
-                      <CrownGlyph ink={bad.has(`${r},${c}`) ? '#fff' : '#212529'} />
+                      <CrownGlyph ink={bad.has(`${r},${c}`) ? '#fff' : tone('#212529')} />
                     </Glyph>
                   )}
                 </Pressable>
@@ -213,5 +212,5 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
   },
-  cell: { alignItems: 'center', justifyContent: 'center', borderColor: '#212529' },
+  cell: { alignItems: 'center', justifyContent: 'center', borderColor: tone('#212529') },
 });

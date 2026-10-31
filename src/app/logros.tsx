@@ -4,10 +4,10 @@ import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { type Achievement, loadAchievements, type Tier } from '@/achievements';
 import { Glyph, MedalGlyph } from '@/components/icons';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
-const TIER_COLORS: Record<Tier, string> = { bronce: '#C8793C', plata: '#9AA5B1', oro: '#F2B705' };
-const LOCKED = '#CED4DA';
+const TIER_COLORS: Record<Tier, string> = { bronce: tone('#C8793C'), plata: tone('#9AA5B1'), oro: tone('#F2B705') };
+const LOCKED = tone('#CED4DA');
 
 export default function LogrosScreen() {
   const { width } = useWindowSize();
@@ -69,18 +69,18 @@ export default function LogrosScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 16, alignItems: 'center' },
   summary: { backgroundColor: colors.card, borderRadius: radius * 1.5, padding: 18, alignItems: 'center', gap: 4 },
-  summaryNumber: { fontSize: 40, fontWeight: '900', color: '#E67700' },
+  summaryNumber: { fontSize: 40, fontWeight: '900', color: tone('#E67700') },
   summaryOf: { fontSize: 20, color: colors.muted, fontWeight: '700' },
   summaryText: { fontSize: 15, color: colors.muted, fontWeight: '600' },
   track: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFF3BF',
+    backgroundColor: tone('#FFF3BF'),
     alignSelf: 'stretch',
     marginTop: 8,
     overflow: 'hidden',
   },
-  fill: { height: '100%', backgroundColor: '#F59F00', borderRadius: 5 },
+  fill: { height: '100%', backgroundColor: tone('#F59F00'), borderRadius: 5 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   card: {
     flexDirection: 'row',
@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
   cardLocked: { opacity: 0.75 },
   title: { fontSize: 16, fontWeight: '800', color: colors.text },
   desc: { fontSize: 13, color: colors.muted },
-  smallTrack: { height: 6, borderRadius: 3, backgroundColor: '#F1F3F5', overflow: 'hidden' },
-  smallFill: { height: '100%', backgroundColor: '#F59F00' },
+  smallTrack: { height: 6, borderRadius: 3, backgroundColor: tone('#F1F3F5'), overflow: 'hidden' },
+  smallFill: { height: '100%', backgroundColor: tone('#F59F00') },
   count: { fontSize: 12, color: colors.muted, fontWeight: '700' },
   tier: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
 });

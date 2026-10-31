@@ -5,7 +5,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
@@ -13,7 +13,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { cellsOf, type Dir, type Entry, generate } from '@/games/crucigrama';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 
@@ -165,10 +165,7 @@ export default function CrucigramaScreen() {
               ))}
             </View>
           )}
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="crucigrama" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -315,7 +312,7 @@ const styles = StyleSheet.create({
     height: 46,
     backgroundColor: colors.card,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

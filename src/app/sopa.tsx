@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
@@ -13,7 +13,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { generate, lineBetween } from '@/games/sopa';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 type Level = 'facil' | 'medio' | 'dificil' | 'experto';
 const LEVELS: Record<Level, { size: number; words: number; backwards: boolean; label: string }> = {
@@ -22,7 +22,16 @@ const LEVELS: Record<Level, { size: number; words: number; backwards: boolean; l
   dificil: { size: 12, words: 12, backwards: true, label: 'Difícil' },
   experto: { size: 14, words: 16, backwards: true, label: 'Experto' },
 };
-const FOUND_COLORS = ['#FFC9C9', '#FFD8A8', '#FFEC99', '#C0EB75', '#96F2D7', '#A5D8FF', '#D0BFFF', '#FCC2D7'];
+const FOUND_COLORS = [
+  tone('#FFC9C9'),
+  tone('#FFD8A8'),
+  tone('#FFEC99'),
+  tone('#C0EB75'),
+  tone('#96F2D7'),
+  tone('#A5D8FF'),
+  tone('#D0BFFF'),
+  tone('#FCC2D7'),
+];
 
 const create = (l: Level) => generate(LEVELS[l].size, LEVELS[l].words, LEVELS[l].backwards);
 
@@ -134,10 +143,9 @@ export default function SopaScreen() {
             Toca la primera y la última letra de cada palabra.
             {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)} · {found.length}/{words.length}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
+            {found.length}/{words.length}
+          </TimerText>
           {!daily && <LevelBar game="sopa" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }

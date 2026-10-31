@@ -6,7 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { type Autodefinido, cellsOf, generate } from '@/games/autodefinido';
@@ -15,7 +15,7 @@ import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, dark, tone } from '@/theme';
 
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 const emptyLetters = (p: Autodefinido) => p.cells.map((row) => row.map(() => ''));
@@ -151,10 +151,7 @@ export default function AutodefinidoScreen() {
       top={
         <>
           {daily && <DailyHeader />}
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="autodefinido" variant={'normal'} level={stage} onPick={(s) => newGame(s)} />}
         </>
       }
@@ -176,13 +173,13 @@ export default function AutodefinidoScreen() {
                         style={[
                           styles.clueCell,
                           { width: cell, height: cell },
-                          selected && { backgroundColor: '#FFD43B' },
+                          selected && { backgroundColor: tone('#FFD43B') },
                         ]}
                       >
                         {target.clues.map((x, k) => (
                           <View
                             key={k}
-                            style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: '#E0C55C' }]}
+                            style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: tone('#E0C55C') }]}
                           >
                             <Text
                               style={[
@@ -299,11 +296,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   board: { borderWidth: 1.5, borderColor: colors.text, borderRadius: 20, overflow: 'hidden' },
-  block: { backgroundColor: '#343A40', borderWidth: 0.5, borderColor: '#212529' },
-  clueCell: { backgroundColor: '#FFF3BF', borderWidth: 0.5, borderColor: '#BFA13A' },
+  block: { backgroundColor: dark ? '#0B0C0F' : '#343A40', borderWidth: 0.5, borderColor: dark ? '#000' : '#212529' },
+  clueCell: { backgroundColor: tone('#FFF3BF'), borderWidth: 0.5, borderColor: tone('#BFA13A') },
   clueHalf: { flex: 1, paddingHorizontal: 2, paddingTop: 1, justifyContent: 'space-between' },
-  clueText: { color: '#5C4813', fontWeight: '600', lineHeight: undefined },
-  arrow: { color: '#E8590C', alignSelf: 'flex-end', lineHeight: undefined },
+  clueText: { color: tone('#5C4813'), fontWeight: '600', lineHeight: undefined },
+  arrow: { color: tone('#E8590C'), alignSelf: 'flex-end', lineHeight: undefined },
   letterCell: {
     backgroundColor: colors.card,
     borderWidth: 0.5,
@@ -318,7 +315,7 @@ const styles = StyleSheet.create({
     height: 46,
     backgroundColor: colors.card,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

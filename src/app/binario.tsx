@@ -6,15 +6,17 @@ import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { useUndo } from '@/hooks/useUndo';
+import { withWrong } from '@/games/latin';
 import { conflicts, generate, type Grid } from '@/games/binario';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
+import { useSettings } from '@/settings';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
 type Level = 'facil' | 'medio' | 'dificil' | 'experto';
 // Easier levels hand back some solved cells on top of the minimal puzzle.
@@ -39,7 +41,12 @@ export default function BinarioScreen() {
   const { board: size, panel } = useGameSizes(420);
   const cell = size / n;
 
-  const bad = useMemo(() => conflicts(board, n), [board, n]);
+  const { showErrors } = useSettings();
+  // With "show errors" on, any number that doesn't match the solution is shown as wrong too.
+  const bad = useMemo(
+    () => (showErrors ? withWrong(conflicts(board, n), board, game.solution) : conflicts(board, n)),
+    [board, n, showErrors, game.solution],
+  );
   const solved = board.every((v, i) => v === game.solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
   const stats = useStats(`binario:${level}`, finished);
@@ -114,10 +121,7 @@ export default function BinarioScreen() {
             Rellena con soles y lunas: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y
             sin filas ni columnas repetidas. Toca una casilla para cambiarla.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="binario" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -131,7 +135,7 @@ export default function BinarioScreen() {
                 style={[
                   styles.cell,
                   { width: cell, height: cell },
-                  game.puzzle[i] !== 0 && { backgroundColor: '#ECEAE4' },
+                  game.puzzle[i] !== 0 && { backgroundColor: tone('#ECEAE4') },
                   bad.has(i) && { backgroundColor: colors.dangerSoft },
                 ]}
               >

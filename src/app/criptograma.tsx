@@ -6,7 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { generate, isLetter, type Level, LEVELS } from '@/games/criptograma';
@@ -14,7 +14,7 @@ import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 
@@ -139,10 +139,7 @@ export default function CriptogramaScreen() {
           <Text style={styles.help}>
             Descifra el refrán. Cada número es siempre la misma letra: toca una casilla y escribe la letra que crees.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="criptograma" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
       }
@@ -252,7 +249,7 @@ const styles = StyleSheet.create({
     height: 46,
     backgroundColor: colors.card,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

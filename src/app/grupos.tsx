@@ -11,11 +11,11 @@ import { groupOf, PUZZLES } from '@/games/grupos';
 import { random, shuffle, withSeed } from '@/games/random';
 import { completeLevel } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 const MISTAKES = 4;
 // Easiest to hardest group.
-const GROUP_COLORS = ['#FFE066', '#8CE99A', '#74C0FC', '#D0BFFF'];
+const GROUP_COLORS = [tone('#FFE066'), tone('#8CE99A'), tone('#74C0FC'), tone('#D0BFFF')];
 
 /** A puzzle index plus its 16 words in a random order. */
 function deal(index: number) {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   tile: {
     backgroundColor: colors.card,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     borderRadius: radius / 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -223,8 +223,8 @@ const styles = StyleSheet.create({
   mistakes: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   mistakesLabel: { fontSize: 14, color: colors.muted },
   dot: { width: 14, height: 14, borderRadius: 7 },
-  dotOn: { backgroundColor: '#495057' },
-  dotOff: { backgroundColor: '#DEE2E6' },
+  dotOn: { backgroundColor: tone('#495057') },
+  dotOff: { backgroundColor: tone('#DEE2E6') },
   message: { fontSize: 15, fontWeight: '700', color: colors.danger },
   row: { flexDirection: 'row', gap: 8 },
 });

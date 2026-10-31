@@ -12,7 +12,7 @@ import { pick, withSeed } from '@/games/random';
 import { SOLUTIONS } from '@/games/words';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colorblind, colors, radius, tone } from '@/theme';
 
 const LENGTH = 5;
 type Level = 'facil' | 'normal' | 'dificil';
@@ -23,10 +23,11 @@ const LEVELS: Record<Level, { tries: number; label: string }> = {
 };
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', '<ZXCVBNM>'];
 
+// Colour-blind mode uses orange and blue, which everyone can tell apart, instead of green and yellow.
 const MARK_COLORS: Record<Mark, string> = {
-  correct: '#2F9E44',
-  present: '#E8A400',
-  absent: '#868E96',
+  correct: tone(colorblind ? '#E8590C' : '#2F9E44'),
+  present: tone(colorblind ? '#1C7ED6' : '#E8A400'),
+  absent: tone('#868E96'),
 };
 
 export default function PalabraScreen() {
@@ -71,7 +72,9 @@ export default function PalabraScreen() {
     if (!daily) completeLevel('palabra', level, stage);
     if (daily) {
       // Coloured squares of every guess, without the letters, for sharing.
-      const squares: Record<Mark, string> = { correct: '🟩', present: '🟨', absent: '⬜' };
+      const squares: Record<Mark, string> = colorblind
+        ? { correct: '🟧', present: '🟦', absent: '⬜' }
+        : { correct: '🟩', present: '🟨', absent: '⬜' };
       const grid = guesses
         .map((g) =>
           score(g, answer)
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
     height: 52,
     backgroundColor: colors.card,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     borderRadius: radius / 2,
     alignItems: 'center',
     justifyContent: 'center',

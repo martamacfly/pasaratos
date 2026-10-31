@@ -1,13 +1,15 @@
 import { usePathname } from 'expo-router';
-import { useContext, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { type ReactNode, useContext, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
 import { CelebrateContext } from '@/components/GameLayout';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
+import { buzz, tap } from '@/haptics';
 import { spendHint, useHints } from '@/hints';
+import { useSettings } from '@/settings';
 import { share } from '@/share';
-import { colors } from '@/theme';
+import { colors, tone } from '@/theme';
 
 /** Buttons take the colour of the game on screen. */
 export function Button({
@@ -25,7 +27,10 @@ export function Button({
   const primary = variant === 'primary';
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        tap();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.button,
         primary
@@ -40,11 +45,12 @@ export function Button({
   );
 }
 
-/** Result message under the board; a winning one also throws confetti. */
+/** Result message under the board; a winning one also throws confetti. Both vibrate. */
 export function Banner({ text, tone = 'success' }: { text: string; tone?: 'success' | 'danger' }) {
   const celebrate = useContext(CelebrateContext);
   useEffect(() => {
     if (tone === 'success') celebrate();
+    buzz(tone === 'success');
     // Only when the banner first appears.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -63,13 +69,22 @@ export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: n
       {Array.from({ length: max }, (_, k) => k + 1).map((n) => (
         <Pressable
           key={n}
-          onPress={() => onPress(n)}
+          onPress={() => {
+            tap();
+            onPress(n);
+          }}
           style={({ pressed }) => [styles.key, { borderBottomColor: theme.soft }, pressed && styles.keyPressed]}
         >
           <Text style={[styles.keyText, { color: theme.main }]}>{n}</Text>
         </Pressable>
       ))}
-      <Pressable onPress={() => onPress(0)} style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}>
+      <Pressable
+        onPress={() => {
+          tap();
+          onPress(0);
+        }}
+        style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
+      >
         <Text style={[styles.keyText, { color: colors.text }]}>⌫</Text>
       </Pressable>
     </View>
@@ -139,6 +154,33 @@ export function DailyHeader() {
   );
 }
 
+/**
+ * The game's clock with the best time, followed by `children` (moves, pairs…). The clock and the
+ * record are left out when the "show timer" setting is off.
+ */
+export function TimerText({
+  seconds,
+  best,
+  style,
+  children,
+}: {
+  seconds: number;
+  best?: number;
+  style: TextStyle;
+  children?: ReactNode;
+}) {
+  const { showTimer } = useSettings();
+  if (!showTimer && !children) return null;
+  return (
+    <Text style={style}>
+      {showTimer && formatTime(seconds)}
+      {showTimer && children ? ' · ' : null}
+      {children}
+      {showTimer && best !== undefined && ` · Récord ${formatTime(best)}`}
+    </Text>
+  );
+}
+
 export function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -186,7 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     borderBottomWidth: 3,
-    borderBottomColor: '#DAD6CC',
+    borderBottomColor: tone('#DAD6CC'),
     alignItems: 'center',
     justifyContent: 'center',
   },

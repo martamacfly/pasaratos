@@ -1,3 +1,4 @@
+import { colorblind, SAFE_COLORS } from '@/theme';
 import { random, shuffle } from './random';
 
 export type Level = 'facil' | 'medio' | 'dificil';
@@ -7,7 +8,9 @@ export const LEVELS: Record<Level, { length: number; colors: number; repeat: boo
   dificil: { length: 5, colors: 7, repeat: true, label: 'Difícil' },
 };
 export const TRIES = 10;
-export const PEG_COLORS = ['#E03131', '#1971C2', '#2F9E44', '#F59F00', '#9C36B5', '#0C8599', '#E64980'];
+export const PEG_COLORS = colorblind
+  ? SAFE_COLORS.slice(0, 7)
+  : ['#E03131', '#1971C2', '#2F9E44', '#F59F00', '#9C36B5', '#0C8599', '#E64980'];
 
 /** Secret code: `length` colour indices, repeated or not depending on the level. */
 export function generate(level: Level): number[] {

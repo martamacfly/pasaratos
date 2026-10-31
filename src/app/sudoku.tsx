@@ -5,15 +5,17 @@ import { router } from 'expo-router';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
 import { useUndo } from '@/hooks/useUndo';
+import { withWrong } from '@/games/latin';
 import { type Board, conflicts, type Difficulty, generate, sameUnit } from '@/games/sudoku';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
+import { useSettings } from '@/settings';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors, radius, tone } from '@/theme';
 
 const DIFFICULTIES: { key: Difficulty; label: string }[] = [
   { key: 'facil', label: 'Fácil' },
@@ -54,7 +56,12 @@ export default function SudokuScreen() {
 
   const solved = board.every((n, i) => n === game.solution[i]);
   const [seconds, setSeconds] = useTimer(!solved);
-  const bad = useMemo(() => conflicts(board), [board]);
+  const { showErrors, highlight } = useSettings();
+  // With "show errors" on, any number that doesn't match the solution is shown as wrong too.
+  const bad = useMemo(
+    () => (showErrors ? withWrong(conflicts(board), board, game.solution) : conflicts(board)),
+    [board, showErrors, game.solution],
+  );
   const stats = useStats(`sudoku:${difficulty}`, finished);
 
   const loaded = useAutosave(saveKey, { date, stage, difficulty, game, board, notes, seconds, finished }, (s) => {
@@ -136,10 +143,7 @@ export default function SudokuScreen() {
               ))}
             </View>
           )}
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && (
             <LevelBar game="sudoku" variant={difficulty} level={stage} onPick={(s) => newGame(difficulty, s)} />
           )}
@@ -153,8 +157,8 @@ export default function SudokuScreen() {
               const c = i % 9;
               const given = game.puzzle[i] !== 0;
               const isSelected = i === selected;
-              const related = selected !== null && sameUnit(i, selected);
-              const sameNumber = n !== 0 && n === selectedValue;
+              const related = highlight && selected !== null && sameUnit(i, selected);
+              const sameNumber = highlight && n !== 0 && n === selectedValue;
               return (
                 <Pressable
                   key={i}
@@ -167,9 +171,9 @@ export default function SudokuScreen() {
                       borderRightWidth: c === 8 ? 0 : c % 3 === 2 ? 2 : 0.5,
                       borderBottomWidth: r === 8 ? 0 : r % 3 === 2 ? 2 : 0.5,
                     },
-                    related && { backgroundColor: '#EEF2FF' },
+                    related && { backgroundColor: tone('#EEF2FF') },
                     sameNumber && { backgroundColor: colors.accentSoft },
-                    isSelected && { backgroundColor: '#BAC8FF' },
+                    isSelected && { backgroundColor: tone('#BAC8FF') },
                   ]}
                 >
                   {n !== 0 ? (

@@ -1,4 +1,5 @@
 import { usePathname } from 'expo-router';
+import { dark, readable, shade, tone } from '@/theme';
 
 /** main: header and buttons; soft: highlights and borders; bg: screen background. */
 export type GameTheme = { main: string; soft: string; bg: string };
@@ -24,9 +25,20 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   deslizante: { main: '#5C940D', soft: '#E9FAC8', bg: '#F6FDE9' },
   criptograma: { main: '#8D5524', soft: '#F5E6D3', bg: '#FBF6EF' },
   logros: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
+  ajustes: { main: '#5F3DC4', soft: '#E5DBFF', bg: '#F3F0FF' },
 };
 
-export const themeFor = (route: string) => GAME_THEMES[route] ?? DEFAULT;
+// In dark mode the header keeps the game's colour, while tints and backgrounds turn dark in its hue.
+// Dark colours like Buscaminas' grey are lightened, since they are also used for text and buttons.
+const forDark = ({ main, soft }: GameTheme): GameTheme => ({
+  main: readable(main),
+  soft: tone(soft),
+  bg: shade(main, 0.09, 0.25),
+});
+const DARK_THEMES = Object.fromEntries(Object.entries(GAME_THEMES).map(([k, t]) => [k, forDark(t)]));
+
+export const themeFor = (route: string) =>
+  dark ? (DARK_THEMES[route] ?? forDark(DEFAULT)) : (GAME_THEMES[route] ?? DEFAULT);
 
 /** Theme of the game on screen, taken from the route (e.g. "/sudoku" -> sudoku). */
 export function useGameTheme(): GameTheme {

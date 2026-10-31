@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, TimerText } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
@@ -114,10 +114,7 @@ export default function NonogramaScreen() {
           <Text style={styles.help}>
             Los números indican los bloques de casillas pintadas seguidas en cada fila y columna, en orden.
           </Text>
-          <Text style={styles.timer}>
-            {formatTime(seconds)}
-            {stats?.best !== undefined && ` · Récord ${formatTime(stats.best)}`}
-          </Text>
+          <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="nonograma" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}
         </>
       }
