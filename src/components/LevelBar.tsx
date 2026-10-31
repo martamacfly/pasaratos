@@ -10,8 +10,9 @@ import { colors } from '@/theme';
 /**
  * "Nivel N" with arrows to move between open levels, a button to restart the current one from
  * scratch, and a grid of all levels of the current difficulty showing which are completed, open
- * or still locked. A level already completed is marked as such whenever it is on screen, and when
- * it is opened again its board is covered by a card offering to replay it or go on to the next one.
+ * or still locked. Opening a game or changing difficulty jumps to the first level not yet completed.
+ * A level already completed is marked as such whenever it is on screen, and when it is opened again
+ * its board is covered by a card offering to replay it or go on to the next one.
  */
 export function LevelBar({
   game,
@@ -32,6 +33,8 @@ export function LevelBar({
   const setCover = useContext(BoardCoverContext);
   // The level the cover was last decided for, so finishing a level doesn't hide the solved board.
   const checked = useRef<string | null>(null);
+  // The variant last seen: a new one (opening the game, changing difficulty) means a fresh start.
+  const lastVariant = useRef<string | null>(null);
   const [open, setOpen] = useState(false);
   const canPrev = level > 1;
   const canNext = level < count && isUnlocked(done, level + 1);
@@ -41,8 +44,16 @@ export function LevelBar({
     const key = `${variant}:${level}`;
     if (!loaded || checked.current === key) return;
     checked.current = key;
+    const freshStart = lastVariant.current !== String(variant);
+    lastVariant.current = String(variant);
     if (!done.includes(level)) {
       setCover(null);
+      return;
+    }
+    const firstOpen = Array.from({ length: count }, (_, k) => k + 1).find((n) => !done.includes(n));
+    if (freshStart && firstOpen !== undefined) {
+      setCover(null);
+      onPick(firstOpen);
       return;
     }
     setCover(

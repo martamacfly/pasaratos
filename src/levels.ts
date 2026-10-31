@@ -39,16 +39,19 @@ export const isUnlocked = (done: number[], level: number) => level === 1 || done
  * have been read from storage yet.
  */
 export function useLevelProgress(game: string, variant: string | number): [number[], boolean] {
-  const [done, setDone] = useState<number[] | null>(null);
+  const key = `${game}:${variant}`;
+  // Remember which variant the list belongs to, so a change of difficulty isn't answered with the old one.
+  const [state, setState] = useState<{ key: string; done: number[] } | null>(null);
   useEffect(() => {
     let alive = true;
-    const reload = () => load().then((all) => alive && setDone(all[`${game}:${variant}`] ?? []));
+    const reload = () => load().then((all) => alive && setState({ key, done: all[key] ?? [] }));
     reload();
     listeners.add(reload);
     return () => {
       alive = false;
       listeners.delete(reload);
     };
-  }, [game, variant]);
-  return [done ?? [], done !== null];
+  }, [key]);
+  const current = state?.key === key ? state.done : null;
+  return [current ?? [], current !== null];
 }
