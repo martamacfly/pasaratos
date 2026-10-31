@@ -2,13 +2,14 @@ import { usePathname } from 'expo-router';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
-import { CelebrateContext } from '@/components/GameLayout';
+import { CelebrateContext, LevelInfoContext } from '@/components/GameLayout';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { buzz, tap } from '@/haptics';
 import { spendHint, useHints } from '@/hints';
 import { useSettings } from '@/settings';
 import { share } from '@/share';
+import { levelShareText } from '@/social';
 import { colors, tone } from '@/theme';
 
 /** Buttons take the colour of the game on screen. */
@@ -45,9 +46,13 @@ export function Button({
   );
 }
 
-/** Result message under the board; a winning one also throws confetti. Both vibrate. */
+/**
+ * Result message under the board; a winning one also throws confetti and, for a level, offers to
+ * share it. Both vibrate.
+ */
 export function Banner({ text, tone = 'success' }: { text: string; tone?: 'success' | 'danger' }) {
   const celebrate = useContext(CelebrateContext);
+  const { info } = useContext(LevelInfoContext);
   useEffect(() => {
     if (tone === 'success') celebrate();
     buzz(tone === 'success');
@@ -55,9 +60,12 @@ export function Banner({ text, tone = 'success' }: { text: string; tone?: 'succe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.success : colors.danger }]}>
-      <Text style={styles.bannerText}>{text}</Text>
-    </View>
+    <>
+      <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.success : colors.danger }]}>
+        <Text style={styles.bannerText}>{text}</Text>
+      </View>
+      {tone === 'success' && info && <ShareButton text={levelShareText(info, text)} label="Compartir" />}
+    </>
   );
 }
 

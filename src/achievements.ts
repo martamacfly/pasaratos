@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { type DailyLog, loadDaily } from './daily';
 import { ALL_GAMES } from './games/catalog';
 import { load as loadLevels, type Progress } from './levels';
@@ -188,4 +189,25 @@ export async function loadAchievements(): Promise<Achievement[]> {
     const value = Math.min(progress(data), def.goal);
     return { ...def, progress: value, unlocked: value >= def.goal };
   });
+}
+
+// Ids of the achievements the player has already been told about.
+const SEEN_KEY = 'achievements:seen';
+
+/**
+ * Achievements unlocked since the last time this was asked, which are then remembered as seen.
+ * Asked after every win. The very first time it only remembers what is unlocked already.
+ */
+export async function newAchievements(): Promise<Achievement[]> {
+  const unlocked = (await loadAchievements()).filter((a) => a.unlocked);
+  const raw = await AsyncStorage.getItem(SEEN_KEY);
+  await AsyncStorage.setItem(SEEN_KEY, JSON.stringify(unlocked.map((a) => a.id)));
+  if (raw === null) return [];
+  const seen = new Set<string>(JSON.parse(raw));
+  return unlocked.filter((a) => !seen.has(a.id));
+}
+
+/** Remembers the achievements unlocked before they were announced, so old ones never show as new. */
+export async function initSeenAchievements() {
+  if ((await AsyncStorage.getItem(SEEN_KEY)) === null) await newAchievements();
 }

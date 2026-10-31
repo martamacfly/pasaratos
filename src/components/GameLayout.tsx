@@ -1,8 +1,11 @@
-import { createContext, type ReactNode, useRef, useState } from 'react';
+import { createContext, type ReactNode, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useWindowSize } from '@/hooks/useWindowSize';
+import { type Achievement, newAchievements } from '@/achievements';
+import { AchievementToast } from '@/components/AchievementToast';
 import { Confetti } from '@/components/Confetti';
 import { getSettings } from '@/settings';
+import type { LevelInfo } from '@/social';
 import { dark } from '@/theme';
 
 /**
@@ -11,8 +14,17 @@ import { dark } from '@/theme';
  */
 export const BoardCoverContext = createContext<(cover: ReactNode | null) => void>(() => {});
 
-/** Throws confetti over the page; the victory banner calls it when a game is won. */
+/**
+ * Throws confetti over the page and announces any achievement just unlocked; the victory banner
+ * calls it when a game is won.
+ */
 export const CelebrateContext = createContext<() => void>(() => {});
+
+/** The level being played, set by the level bar, so the victory banner can offer to share it. */
+export const LevelInfoContext = createContext<{ info: LevelInfo | null; setInfo: (info: LevelInfo | null) => void }>({
+  info: null,
+  setInfo: () => {},
+});
 
 const WIDE = 900; // from this width the game is laid out like a web page, with a side panel
 const PANEL = 380;
@@ -58,10 +70,16 @@ export function GameLayout({
   const { wide } = useGameSizes();
   const [cover, setCover] = useState<ReactNode | null>(null);
   const [burst, setBurst] = useState(0);
+  const [unlocked, setUnlocked] = useState<Achievement[]>([]);
+  const [info, setInfo] = useState<LevelInfo | null>(null);
+  const levelInfo = useMemo(() => ({ info, setInfo }), [info]);
   const openedAt = useRef(Date.now());
-  // A game that was already won shows its banner as soon as it is reopened: no confetti for that.
+  // A game that was already won shows its banner as soon as it is reopened: no celebration for that.
   const celebrate = () => {
-    if (getSettings().confetti && Date.now() - openedAt.current > 1500) setBurst(Date.now());
+    if (Date.now() - openedAt.current <= 1500) return;
+    if (getSettings().confetti) setBurst(Date.now());
+    // The result is saved by the game at the same time; give it a moment before looking.
+    setTimeout(() => newAchievements().then((list) => list.length && setUnlocked(list)), 1200);
   };
   const boardWithCover = (
     <View>
@@ -95,10 +113,13 @@ export function GameLayout({
   return (
     <BoardCoverContext.Provider value={setCover}>
       <CelebrateContext.Provider value={celebrate}>
-        <View style={styles.screen}>
-          {page}
-          <Confetti burst={burst} />
-        </View>
+        <LevelInfoContext.Provider value={levelInfo}>
+          <View style={styles.screen}>
+            {page}
+            <Confetti burst={burst} />
+            {unlocked.length > 0 && <AchievementToast list={unlocked} onClose={() => setUnlocked([])} />}
+          </View>
+        </LevelInfoContext.Provider>
       </CelebrateContext.Provider>
     </BoardCoverContext.Provider>
   );

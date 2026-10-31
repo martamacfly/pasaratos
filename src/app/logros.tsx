@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { type Achievement, loadAchievements, type Tier } from '@/achievements';
 import { Glyph, MedalGlyph } from '@/components/icons';
+import { ShareButton } from '@/components/ui';
+import { share } from '@/share';
+import { achievementShareText, achievementsSummaryText } from '@/social';
 import { colors, radius, tone } from '@/theme';
 
 const TIER_COLORS: Record<Tier, string> = { bronce: tone('#C8793C'), plata: tone('#9AA5B1'), oro: tone('#F2B705') };
@@ -31,6 +34,9 @@ export default function LogrosScreen() {
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${list.length ? (unlocked / list.length) * 100 : 0}%` }]} />
         </View>
+        {unlocked > 0 && (
+          <ShareButton text={achievementsSummaryText(list)} label="Compartir mis logros" style={{ marginTop: 10 }} />
+        )}
       </View>
 
       <View style={[styles.grid, { width: content }]}>
@@ -56,13 +62,36 @@ export default function LogrosScreen() {
                   </View>
                 )}
                 {a.unlocked && (
-                  <Text style={[styles.tier, { color: TIER_COLORS[a.tier] }]}>{a.tier.toUpperCase()}</Text>
+                  <View style={styles.unlockedRow}>
+                    <Text style={[styles.tier, { color: TIER_COLORS[a.tier] }]}>{a.tier.toUpperCase()}</Text>
+                    <ShareLink text={achievementShareText(a)} />
+                  </View>
                 )}
               </View>
             </View>
           ))}
       </View>
     </ScrollView>
+  );
+}
+
+/** Small "Compartir" link that briefly says whether the text was shared or copied. */
+function ShareLink({ text }: { text: string }) {
+  const [feedback, setFeedback] = useState<string | null>(null);
+  async function onPress() {
+    const result = await share(text);
+    setFeedback(result === 'copied' ? '¡Copiado!' : result === 'shared' ? '¡Compartido!' : 'No se pudo');
+    setTimeout(() => setFeedback(null), 2000);
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => pressed && { opacity: 0.6 }}
+    >
+      <Text style={styles.shareLink}>{feedback ?? 'Compartir'}</Text>
+    </Pressable>
   );
 }
 
@@ -97,4 +126,6 @@ const styles = StyleSheet.create({
   smallFill: { height: '100%', backgroundColor: tone('#F59F00') },
   count: { fontSize: 12, color: colors.muted, fontWeight: '700' },
   tier: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  unlockedRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  shareLink: { fontSize: 13, fontWeight: '800', color: colors.accent },
 });

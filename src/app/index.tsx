@@ -6,7 +6,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ChartGlyph, CheckGlyph, CrossGlyph, GameIcon, GearGlyph, Glyph, MedalGlyph } from '@/components/icons';
-import { loadAchievements } from '@/achievements';
+import { initSeenAchievements, loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
@@ -34,6 +34,7 @@ export default function Home() {
     useCallback(() => {
       loadStats().then(setStats);
       loadDaily().then(setDaily);
+      initSeenAchievements();
       loadAchievements().then((list) =>
         setMedals({ unlocked: list.filter((a) => a.unlocked).length, total: list.length }),
       );

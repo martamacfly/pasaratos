@@ -194,7 +194,11 @@ export default function CodigoScreen() {
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
-          {won && <Banner text={`¡Código descifrado en ${guesses.length} intentos!`} />}
+          {won && (
+            <Banner
+              text={`¡Código descifrado en ${guesses.length} ${guesses.length === 1 ? 'intento' : 'intentos'}!`}
+            />
+          )}
           {lost && <Banner tone="danger" text="Se acabaron los intentos" />}
           {!daily && !over && shown.length > 0 && (
             <View style={styles.hintRow}>

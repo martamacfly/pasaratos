@@ -6,7 +6,7 @@ import { Text } from '@/components/AppText';
 import { GameIcon } from '@/components/icons';
 import { formatTime } from '@/components/ui';
 import { dateKey, type DailyLog, loadDaily, streak } from '@/daily';
-import { ALL_GAMES, CAN_LOSE, gameName } from '@/games/catalog';
+import { ALL_GAMES, CAN_LOSE, gameName, variantName } from '@/games/catalog';
 import { useGameTheme } from '@/gameTheme';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { LEVEL_COUNT, load as loadLevels, type Progress } from '@/levels';
@@ -17,16 +17,6 @@ type Data = { stats: Record<string, Stats>; daily: DailyLog; levels: Progress };
 
 const WEEKS = 6; // weeks shown in the daily challenge calendar
 const DAY_LETTERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-const VARIANT_NAMES: Record<string, string> = {
-  facil: 'Fácil',
-  normal: 'Normal',
-  medio: 'Medio',
-  dificil: 'Difícil',
-  experto: 'Experto',
-};
-
-/** "facil" -> "Fácil", "7" -> "7×7". */
-const variantName = (v: string) => VARIANT_NAMES[v] ?? (/^\d+$/.test(v) ? `${v}×${v}` : v);
 
 /** Stats and levels keys look like "sudoku:facil", or just "palabra" for games without variants. */
 const split = (key: string) => {

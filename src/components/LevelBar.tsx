@@ -1,13 +1,14 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
-import { BoardCoverContext } from '@/components/GameLayout';
+import { BoardCoverContext, LevelInfoContext } from '@/components/GameLayout';
 import { CheckGlyph, Glyph, LockGlyph } from '@/components/icons';
-import { Button } from '@/components/ui';
+import { Button, ShareButton } from '@/components/ui';
 import { confirm } from '@/confirm';
 import { useGameTheme } from '@/gameTheme';
 import { isUnlocked, LEVEL_COUNT, useLevelProgress } from '@/levels';
 import { useSettings } from '@/settings';
+import { levelShareText } from '@/social';
 import { colors, tone } from '@/theme';
 
 /**
@@ -90,12 +91,23 @@ export function LevelBar({
         {level < count && (
           <Button label="Siguiente nivel" onPress={() => onPick(level + 1)} style={{ alignSelf: 'stretch' }} />
         )}
+        <ShareButton
+          text={levelShareText({ game, variant, level })}
+          label="Compartir"
+          style={{ alignSelf: 'stretch' }}
+        />
       </View>,
     );
-  }, [loaded, done, level, variant, count, onPick, setCover]);
+  }, [loaded, done, level, variant, count, onPick, setCover, game]);
 
   // Leaving the screen (or changing game) removes the card.
   useEffect(() => () => setCover(null), [setCover]);
+
+  const { setInfo } = useContext(LevelInfoContext);
+  useEffect(() => {
+    setInfo({ game, variant, level });
+    return () => setInfo(null);
+  }, [setInfo, game, variant, level]);
 
   return (
     <View style={styles.wrap}>

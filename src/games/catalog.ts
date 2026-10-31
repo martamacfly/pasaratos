@@ -100,6 +100,18 @@ export const ALL_GAMES = SECTIONS.flatMap((s) => s.games);
 
 export const gameName = (id: string) => ALL_GAMES.find((g) => g.id === id)?.name ?? id;
 
+const VARIANT_NAMES: Record<string, string> = {
+  facil: 'Fácil',
+  normal: 'Normal',
+  medio: 'Medio',
+  dificil: 'Difícil',
+  experto: 'Experto',
+};
+
+/** Name of a difficulty or board size: "facil" -> "Fácil", "7" -> "7×7". */
+export const variantName = (v: string | number) =>
+  VARIANT_NAMES[v] ?? (/^\d+$/.test(String(v)) ? `${v}×${v}` : String(v));
+
 // Games that can be lost show "won of played"; the rest only count solved puzzles.
 export const CAN_LOSE = new Set<string>(['palabra', 'buscaminas', 'grupos', 'codigo']);
 
