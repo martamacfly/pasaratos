@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
 import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';

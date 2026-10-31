@@ -1,9 +1,20 @@
+import {
+  Fredoka_400Regular,
+  Fredoka_500Medium,
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+  useFonts,
+} from '@expo-google-fonts/fredoka';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { FONTS } from '@/components/AppText';
 import { HomeButton } from '@/components/HomeButton';
 import { themeFor } from '@/gameTheme';
 
 export default function RootLayout() {
+  // Not waited for: until Fredoka arrives the text shows in the system font, so the pre-rendered
+  // web pages and the first frame on a phone are never blank.
+  useFonts({ Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold });
   return (
     <>
       <StatusBar style="light" />
@@ -15,7 +26,7 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: theme.main },
             headerShadowVisible: false,
             headerTintColor: '#fff',
-            headerTitleStyle: { fontWeight: '800', fontSize: 20 },
+            headerTitleStyle: { fontFamily: FONTS.bold, fontSize: 21 },
             contentStyle: { backgroundColor: theme.bg },
             // Always shown, so a game opened from a link or after a reload can still get back to the menu.
             headerLeft: () => <HomeButton />,

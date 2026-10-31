@@ -1,6 +1,7 @@
 import { usePathname } from 'expo-router';
 import { useContext, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Text } from '@/components/AppText';
 import { CelebrateContext } from '@/components/GameLayout';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';

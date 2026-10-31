@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import { Text } from '@/components/AppText';
 
 /**
  * "‹ Inicio" in the header of every screen. Goes back when there is a previous screen; when a
