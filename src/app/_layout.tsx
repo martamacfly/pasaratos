@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { HomeButton } from '@/components/HomeButton';
 import { themeFor } from '@/gameTheme';
 
 export default function RootLayout() {
@@ -16,6 +17,9 @@ export default function RootLayout() {
             headerTintColor: '#fff',
             headerTitleStyle: { fontWeight: '800', fontSize: 20 },
             contentStyle: { backgroundColor: theme.bg },
+            // Always shown, so a game opened from a link or after a reload can still get back to the menu.
+            headerLeft: () => <HomeButton />,
+            headerBackVisible: false,
           };
         }}
       >
