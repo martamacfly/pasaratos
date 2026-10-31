@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
@@ -28,7 +29,7 @@ const MARK_COLORS: Record<Mark, string> = {
 };
 
 export default function PalabraScreen() {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const { wide, board, panel } = useGameSizes(340);
   // Five tiles look oversized beyond ~400 px on a phone, ~480 px on a desktop.
   const boardWidth = Math.min(board, wide ? 480 : 400);

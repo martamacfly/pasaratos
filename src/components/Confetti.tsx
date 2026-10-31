@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 
 const COLORS = ['#F03E3E', '#FCC419', '#40C057', '#339AF0', '#CC5DE8', '#FF922B', '#20C997'];
 const PIECES = 80;
@@ -9,7 +10,7 @@ const PIECES = 80;
  * starts another one; it never blocks taps on what is underneath.
  */
 export function Confetti({ burst }: { burst: number }) {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const [visible, setVisible] = useState(false);
   const progress = useRef<Animated.Value[]>([]);
 

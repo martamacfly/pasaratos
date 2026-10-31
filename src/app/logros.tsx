@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { type Achievement, loadAchievements, type Tier } from '@/achievements';
 import { Glyph, MedalGlyph } from '@/components/icons';
 import { colors, radius } from '@/theme';
@@ -8,7 +9,7 @@ const TIER_COLORS: Record<Tier, string> = { bronce: '#C8793C', plata: '#9AA5B1',
 const LOCKED = '#CED4DA';
 
 export default function LogrosScreen() {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const [list, setList] = useState<Achievement[]>([]);
   useEffect(() => {
     loadAchievements().then(setList);

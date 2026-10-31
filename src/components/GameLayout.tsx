@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { Confetti } from '@/components/Confetti';
 
 /**
@@ -23,7 +24,7 @@ const PANEL_PADDING = 18;
  * (up to 720 px) and everything else goes in a side panel of fixed width.
  */
 export function useGameSizes(max = 460) {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useWindowSize();
   const wide = width >= WIDE;
   // The pre-rendered web page starts with a 0×0 window; keep sizes positive until it is measured.
   const screenW = Math.max(width, 320);

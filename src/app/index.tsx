@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { CheckGlyph, CrossGlyph, GameIcon, Glyph, MedalGlyph } from '@/components/icons';
@@ -21,7 +22,7 @@ function total(all: Record<string, Stats>, id: string) {
 }
 
 export default function Home() {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [daily, setDaily] = useState<DailyLog>({});

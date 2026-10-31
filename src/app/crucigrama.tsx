@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
@@ -24,7 +25,7 @@ const LEVELS: Record<Level, { words: number; maxSize: number; label: string }> =
 const create = (l: Level) => generate(LEVELS[l].words, LEVELS[l].maxSize);
 
 export default function CrucigramaScreen() {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('crucigrama');
   const [stage, setStage] = useState(1);

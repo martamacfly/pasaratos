@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
@@ -17,7 +18,7 @@ const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 
 export default function CriptogramaScreen() {
   const theme = useGameTheme();
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const { wide, board: size, panel } = useGameSizes(460);
   const { daily, date, seed, saveKey } = useDaily('criptograma');
   const [stage, setStage] = useState(1);

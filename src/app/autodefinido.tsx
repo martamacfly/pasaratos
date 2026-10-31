@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useWindowSize } from '@/hooks/useWindowSize';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
@@ -18,7 +19,7 @@ const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM<'];
 const emptyLetters = (p: Autodefinido) => p.cells.map((row) => row.map(() => ''));
 
 export default function AutodefinidoScreen() {
-  const { width } = useWindowDimensions();
+  const { width } = useWindowSize();
   const theme = useGameTheme();
   const { daily, date, seed, saveKey } = useDaily('autodefinido');
   const [stage, setStage] = useState(1);
