@@ -1,6 +1,7 @@
 import { usePathname } from 'expo-router';
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { CelebrateContext } from '@/components/GameLayout';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { share } from '@/share';
@@ -37,7 +38,14 @@ export function Button({
   );
 }
 
+/** Result message under the board; a winning one also throws confetti. */
 export function Banner({ text, tone = 'success' }: { text: string; tone?: 'success' | 'danger' }) {
+  const celebrate = useContext(CelebrateContext);
+  useEffect(() => {
+    if (tone === 'success') celebrate();
+    // Only when the banner first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.success : colors.danger }]}>
       <Text style={styles.bannerText}>{text}</Text>

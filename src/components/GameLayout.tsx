@@ -1,5 +1,15 @@
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Confetti } from '@/components/Confetti';
+
+/**
+ * Lets something inside the page (the level bar) lay a card over the board, e.g. to say that the
+ * level on screen was already completed. Passing null removes it.
+ */
+export const BoardCoverContext = createContext<(cover: ReactNode | null) => void>(() => {});
+
+/** Throws confetti over the page; the victory banner calls it when a game is won. */
+export const CelebrateContext = createContext<() => void>(() => {});
 
 const WIDE = 900; // from this width the game is laid out like a web page, with a side panel
 const PANEL = 380;
@@ -43,9 +53,22 @@ export function GameLayout({
   scroll?: boolean;
 }) {
   const { wide } = useGameSizes();
+  const [cover, setCover] = useState<ReactNode | null>(null);
+  const [burst, setBurst] = useState(0);
+  const openedAt = useRef(Date.now());
+  // A game that was already won shows its banner as soon as it is reopened: no confetti for that.
+  const celebrate = () => {
+    if (Date.now() - openedAt.current > 1500) setBurst(Date.now());
+  };
+  const boardWithCover = (
+    <View>
+      {board}
+      {cover && <View style={styles.cover}>{cover}</View>}
+    </View>
+  );
   const content = wide ? (
     <View style={styles.row}>
-      <View style={styles.boardColumn}>{board}</View>
+      <View style={styles.boardColumn}>{boardWithCover}</View>
       <View style={[styles.panel, { width: PANEL }]}>
         {top}
         {side}
@@ -55,23 +78,49 @@ export function GameLayout({
     <>
       {top && <View style={styles.top}>{top}</View>}
       <View style={styles.column}>
-        {board}
+        {boardWithCover}
         {side}
       </View>
     </>
   );
   const pageStyle = [styles.page, wide && styles.pageWide];
-  if (!scroll) return <View style={pageStyle}>{content}</View>;
-  return <ScrollView contentContainerStyle={pageStyle}>{content}</ScrollView>;
+  const page = scroll ? (
+    <ScrollView contentContainerStyle={pageStyle}>{content}</ScrollView>
+  ) : (
+    <View style={pageStyle}>{content}</View>
+  );
+  return (
+    <BoardCoverContext.Provider value={setCover}>
+      <CelebrateContext.Provider value={celebrate}>
+        <View style={styles.screen}>
+          {page}
+          <Confetti burst={burst} />
+        </View>
+      </CelebrateContext.Provider>
+    </BoardCoverContext.Provider>
+  );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   page: { padding: 16, gap: 12, alignItems: 'center', flexGrow: 1 },
   pageWide: { padding: GAP, justifyContent: 'center' },
   top: { gap: 10, alignItems: 'center', width: '100%', maxWidth: 460 },
   column: { gap: 12, alignItems: 'center' },
   row: { flexDirection: 'row', gap: GAP, alignItems: 'flex-start', justifyContent: 'center' },
   boardColumn: { alignItems: 'center' },
+  cover: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.88)',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
   panel: {
     gap: 14,
     alignItems: 'center',

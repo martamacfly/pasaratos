@@ -34,9 +34,12 @@ export async function completeLevel(game: string, variant: string | number, leve
 /** A level is open when it is the first one or the one before it has been completed. */
 export const isUnlocked = (done: number[], level: number) => level === 1 || done.includes(level - 1);
 
-/** Completed levels of one game variant, kept up to date as levels are completed. */
-export function useLevelProgress(game: string, variant: string | number): number[] {
-  const [done, setDone] = useState<number[]>([]);
+/**
+ * Completed levels of one game variant, kept up to date as levels are completed, and whether they
+ * have been read from storage yet.
+ */
+export function useLevelProgress(game: string, variant: string | number): [number[], boolean] {
+  const [done, setDone] = useState<number[] | null>(null);
   useEffect(() => {
     let alive = true;
     const reload = () => load().then((all) => alive && setDone(all[`${game}:${variant}`] ?? []));
@@ -47,5 +50,5 @@ export function useLevelProgress(game: string, variant: string | number): number
       listeners.delete(reload);
     };
   }, [game, variant]);
-  return done;
+  return [done ?? [], done !== null];
 }

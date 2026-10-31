@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Glyph, LockGlyph } from '@/components/icons';
+import { BoardCoverContext } from '@/components/GameLayout';
+import { CheckGlyph, Glyph, LockGlyph } from '@/components/icons';
+import { Button } from '@/components/ui';
 import { useGameTheme } from '@/gameTheme';
 import { isUnlocked, LEVEL_COUNT, useLevelProgress } from '@/levels';
 import { colors } from '@/theme';
@@ -8,7 +10,8 @@ import { colors } from '@/theme';
 /**
  * "Nivel N" with arrows to move between open levels, a button to restart the current one from
  * scratch, and a grid of all levels of the current difficulty showing which are completed, open
- * or still locked. A level already completed is marked as such whenever it is on screen.
+ * or still locked. A level already completed is marked as such whenever it is on screen, and when
+ * it is opened again its board is covered by a card offering to replay it or go on to the next one.
  */
 export function LevelBar({
   game,
@@ -25,11 +28,50 @@ export function LevelBar({
   onPick: (level: number) => void;
 }) {
   const theme = useGameTheme();
-  const done = useLevelProgress(game, variant);
+  const [done, loaded] = useLevelProgress(game, variant);
+  const setCover = useContext(BoardCoverContext);
+  // The level the cover was last decided for, so finishing a level doesn't hide the solved board.
+  const checked = useRef<string | null>(null);
   const [open, setOpen] = useState(false);
   const canPrev = level > 1;
   const canNext = level < count && isUnlocked(done, level + 1);
   const completed = done.includes(level);
+
+  useEffect(() => {
+    const key = `${variant}:${level}`;
+    if (!loaded || checked.current === key) return;
+    checked.current = key;
+    if (!done.includes(level)) {
+      setCover(null);
+      return;
+    }
+    setCover(
+      <View style={styles.card}>
+        <View style={styles.badge}>
+          <Glyph size={30}>
+            <CheckGlyph ink="#fff" />
+          </Glyph>
+        </View>
+        <Text style={styles.cardTitle}>¡Nivel {level} completado!</Text>
+        <Text style={styles.cardText}>Ya superaste este nivel. Puedes jugarlo otra vez o seguir con el siguiente.</Text>
+        <Button
+          label="Volver a jugarlo"
+          variant="secondary"
+          onPress={() => {
+            setCover(null);
+            onPick(level);
+          }}
+          style={{ alignSelf: 'stretch' }}
+        />
+        {level < count && (
+          <Button label="Siguiente nivel" onPress={() => onPick(level + 1)} style={{ alignSelf: 'stretch' }} />
+        )}
+      </View>,
+    );
+  }, [loaded, done, level, variant, count, onPick, setCover]);
+
+  // Leaving the screen (or changing game) removes the card.
+  useEffect(() => () => setCover(null), [setCover]);
 
   return (
     <View style={styles.wrap}>
@@ -118,6 +160,30 @@ const styles = StyleSheet.create({
   currentText: { fontSize: 16, fontWeight: '900' },
   progressText: { fontSize: 12, color: colors.muted, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 22,
+    gap: 12,
+    alignItems: 'center',
+    maxWidth: 320,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  badge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: { fontSize: 20, fontWeight: '900', color: colors.text, textAlign: 'center' },
+  cardText: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 4 },
   dot: {
     width: 44,
     height: 44,
