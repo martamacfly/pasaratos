@@ -133,8 +133,10 @@ export default function CodigoScreen() {
           )}
           <Text style={styles.help}>
             Adivina el código secreto de {length} colores
-            {LEVELS[level].repeat ? ' (pueden repetirse)' : ' (sin repetir)'}. Tras cada intento: punto negro, color en
-            su sitio; punto blanco, color que está pero en otro sitio.
+            {LEVELS[level].repeat ? ' (pueden repetirse)' : ' (sin repetir)'} en {TRIES} intentos. Tras cada intento
+            verás un {dark ? 'punto relleno' : 'punto negro'} por cada color en su sitio y un{' '}
+            {dark ? 'aro vacío' : 'punto blanco'} por cada color que está pero en otro sitio. Los puntos no dicen cuál
+            es cuál.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             Intento {over ? guesses.length : guesses.length + 1}/{TRIES}

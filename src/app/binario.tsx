@@ -119,7 +119,7 @@ export default function BinarioScreen() {
           )}
           <Text style={styles.help}>
             Rellena con soles y lunas: la misma cantidad de cada uno por fila y columna, nunca tres iguales seguidos y
-            sin filas ni columnas repetidas. Toca una casilla para cambiarla.
+            sin filas ni columnas repetidas. Toca una casilla para poner sol, luna o dejarla vacía.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="binario" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}

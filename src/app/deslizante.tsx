@@ -91,7 +91,8 @@ export default function DeslizanteScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Ordena los números del 1 al {n * n - 1}. Toca una ficha de la fila o columna del hueco para deslizarla.
+            Ordena los números del 1 al {n * n - 1} de izquierda a derecha y de arriba abajo, con el hueco al final.
+            Toca una ficha de la fila o columna del hueco para deslizarla.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             Movimientos {moves}

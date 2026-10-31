@@ -156,8 +156,8 @@ export default function ColoresScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Une cada pareja de puntos del mismo color arrastrando el dedo. Las líneas no se cruzan y deben llenar todo
-            el tablero.
+            Une cada pareja de puntos del mismo color arrastrando el dedo, solo en horizontal y en vertical. Las líneas
+            no se cruzan y entre todas deben llenar el tablero. Empieza desde un punto para rehacer su línea.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             Parejas {joined}/{pairs.length}

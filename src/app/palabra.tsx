@@ -163,6 +163,11 @@ export default function PalabraScreen() {
               ))}
             </View>
           )}
+          <Text style={styles.help}>
+            Adivina la palabra de {LENGTH} letras en {tries} intentos. Tras cada intento, cada letra se colorea:{' '}
+            {colorblind ? 'naranja' : 'verde'} si está en su sitio, {colorblind ? 'azul' : 'amarillo'} si está en la
+            palabra pero en otro sitio, y gris si no está.
+          </Text>
           {stats && (
             <Text style={styles.stats}>
               Acertadas {stats.won} de {stats.played}
@@ -259,6 +264,7 @@ export default function PalabraScreen() {
 }
 
 const styles = StyleSheet.create({
+  help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   hintText: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
   tile: {
     borderWidth: 2,

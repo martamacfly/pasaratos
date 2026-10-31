@@ -137,7 +137,8 @@ export default function CriptogramaScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Descifra el refrán. Cada número es siempre la misma letra: toca una casilla y escribe la letra que crees.
+            Descifra el refrán. Cada número esconde siempre la misma letra, y cada letra tiene un solo número. Toca una
+            casilla y escribe la letra que crees; las que ya vienen puestas son pistas.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="criptograma" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}

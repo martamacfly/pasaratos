@@ -165,6 +165,10 @@ export default function CrucigramaScreen() {
               ))}
             </View>
           )}
+          <Text style={styles.help}>
+            Toca una casilla y escribe la respuesta de su definición. Toca otra vez la misma casilla para cambiar entre
+            horizontal y vertical. «Comprobar» marca en rojo las letras equivocadas.
+          </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="crucigrama" variant={level} level={stage} onPick={(s) => newGame(level, s)} />}
         </>
@@ -282,6 +286,7 @@ export default function CrucigramaScreen() {
 }
 
 const styles = StyleSheet.create({
+  help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   levels: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   timer: {
     fontSize: 15,

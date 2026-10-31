@@ -143,6 +143,10 @@ export default function SudokuScreen() {
               ))}
             </View>
           )}
+          <Text style={styles.help}>
+            Rellena con números del 1 al 9 sin repetir ninguno en la misma fila, columna ni cuadro de 3×3. Con «Notas»
+            apuntas en pequeño los números que podrían ir en una casilla.
+          </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && (
             <LevelBar game="sudoku" variant={difficulty} level={stage} onPick={(s) => newGame(difficulty, s)} />
@@ -251,6 +255,7 @@ export default function SudokuScreen() {
 }
 
 const styles = StyleSheet.create({
+  help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   padWide: { flexWrap: 'wrap' },
   keyWide: { flexBasis: '30%', aspectRatio: 1.6 },
   row: { flexDirection: 'row', gap: 6, alignSelf: 'stretch', maxWidth: 460, width: '100%' },

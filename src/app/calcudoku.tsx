@@ -140,8 +140,9 @@ export default function CalcudokuScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Números del 1 al {n} sin repetir en filas ni columnas. Cada zona marcada debe dar su resultado con la
-            operación indicada.
+            Rellena con números del 1 al {n} sin repetir en ninguna fila ni columna. Los números de cada zona marcada
+            deben dar su resultado con la operación indicada; en restas y divisiones, se empieza por el mayor. Una zona
+            de una casilla te da su número directamente.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="calcudoku" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}

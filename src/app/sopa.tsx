@@ -140,8 +140,8 @@ export default function SopaScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Toca la primera y la última letra de cada palabra.
-            {LEVELS[level].backwards ? ' Pueden estar al revés.' : ''}
+            Encuentra las palabras de la lista, en horizontal, vertical o diagonal
+            {LEVELS[level].backwards ? ', también escritas al revés' : ''}. Toca su primera y su última letra.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             {found.length}/{words.length}

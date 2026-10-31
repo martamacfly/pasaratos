@@ -128,7 +128,9 @@ export default function CaminoScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Arrastra desde el 1 una línea que pase por todas las casillas y por los números en orden hasta el {last}.
+            Arrastra desde el 1 una línea que pase por los números en orden hasta el {last} y que llene todas las
+            casillas. Solo se mueve en horizontal y en vertical. Para corregir, vuelve hacia atrás o toca la línea donde
+            quieras cortarla.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             {path.length}/{n * n}

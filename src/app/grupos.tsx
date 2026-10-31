@@ -112,7 +112,10 @@ export default function GruposScreen() {
       top={
         <>
           {daily && <DailyHeader />}
-          <Text style={styles.help}>Forma cuatro grupos de cuatro palabras que tengan algo en común.</Text>
+          <Text style={styles.help}>
+            Forma cuatro grupos de cuatro palabras que tengan algo en común. Elige cuatro palabras y pulsa «Enviar». Si
+            fallas {MISTAKES} veces, pierdes.
+          </Text>
           {stats && (
             <Text style={styles.stats}>
               Ganadas {stats.won} de {stats.played}

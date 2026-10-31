@@ -161,6 +161,11 @@ export default function BuscaminasScreen() {
               ))}
             </View>
           )}
+          <Text style={styles.help}>
+            Abre todas las casillas que no tienen mina. Cada número dice cuántas minas tocan esa casilla, también en
+            diagonal. Activa el modo bandera para marcar dónde crees que hay una mina. La primera casilla que abras
+            nunca tiene mina.
+          </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             Minas {flagsLeft}
           </TimerText>
@@ -230,6 +235,7 @@ export default function BuscaminasScreen() {
 }
 
 const styles = StyleSheet.create({
+  help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   timer: {
     fontSize: 15,

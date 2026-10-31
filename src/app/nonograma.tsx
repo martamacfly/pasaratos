@@ -112,7 +112,9 @@ export default function NonogramaScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Los números indican los bloques de casillas pintadas seguidas en cada fila y columna, en orden.
+            Pinta casillas para descubrir el dibujo. Los números de cada fila y columna son, en orden, los bloques de
+            casillas pintadas seguidas, con al menos una vacía entre bloque y bloque. Con «Tachar» marcas las casillas
+            que seguro van vacías.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="nonograma" variant={n} level={stage} onPick={(s) => newGame(n, s)} />}

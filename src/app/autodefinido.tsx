@@ -151,6 +151,10 @@ export default function AutodefinidoScreen() {
       top={
         <>
           {daily && <DailyHeader />}
+          <Text style={styles.help}>
+            Las definiciones están dentro de la cuadrícula, y su flecha indica si la respuesta va hacia la derecha o
+            hacia abajo. Toca una casilla blanca y escribe. «Comprobar» marca en rojo las letras equivocadas.
+          </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best} />
           {!daily && <LevelBar game="autodefinido" variant={'normal'} level={stage} onPick={(s) => newGame(s)} />}
         </>
@@ -284,6 +288,7 @@ export default function AutodefinidoScreen() {
 }
 
 const styles = StyleSheet.create({
+  help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 420 },
   timer: {
     fontSize: 15,
     fontWeight: '800',

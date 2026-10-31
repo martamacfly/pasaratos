@@ -122,8 +122,8 @@ export default function ReinasScreen() {
             </View>
           )}
           <Text style={styles.help}>
-            Coloca {n} reinas: una por fila, columna y color. Dos reinas no pueden tocarse, ni en diagonal. Toca una vez
-            para marcar ✕ y otra para poner la reina.
+            Coloca {n} reinas: una en cada fila, en cada columna y en cada zona de color. Dos reinas no pueden tocarse,
+            ni siquiera en diagonal. Toca una vez para marcar ✕ y otra para poner la reina.
           </Text>
           <TimerText style={styles.timer} seconds={seconds} best={stats?.best}>
             Reinas {queens}/{n}
