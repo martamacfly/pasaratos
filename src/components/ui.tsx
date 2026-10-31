@@ -77,20 +77,21 @@ export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: n
 }
 
 /**
- * Uses one of the hints earned in the daily challenges. `onHint` applies it to the game and
- * returns false when there was nothing left to give away, so no hint is spent.
+ * Uses one of the hints of the game on screen. `onHint` applies it to the game and returns false
+ * when there was nothing left to give away, so no hint is spent.
  */
 export function HintButton({ onHint, style }: { onHint: () => boolean; style?: ViewStyle }) {
-  const count = useHints();
+  const game = usePathname().split('/').filter(Boolean).pop() ?? '';
+  const count = useHints(game);
   const [feedback, setFeedback] = useState<string | null>(null);
   function say(text: string) {
     setFeedback(text);
     setTimeout(() => setFeedback(null), 2500);
   }
   async function onPress() {
-    if (count <= 0) return say('Gana retos del día para conseguir pistas');
+    if (count <= 0) return say('Gana el reto del día para otra pista');
     if (!onHint()) return say('No hace falta ninguna pista');
-    await spendHint();
+    await spendHint(game);
   }
   return <Button label={feedback ?? `Pista · ${count}`} variant="secondary" onPress={onPress} style={style} />;
 }

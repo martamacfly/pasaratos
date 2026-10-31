@@ -10,7 +10,7 @@ import { loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
-import { useHints } from '@/hints';
+import { STARTING_HINTS } from '@/hints';
 import { loadStats, type Stats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -28,7 +28,6 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [daily, setDaily] = useState<DailyLog>({});
-  const hints = useHints();
   const [medals, setMedals] = useState({ unlocked: 0, total: 0 });
 
   useFocusEffect(
@@ -130,7 +129,9 @@ export default function Home() {
               );
             })}
           </View>
-          <Text style={styles.hintText}>Cada reto ganado te da una pista para la partida libre · Tienes {hints}</Text>
+          <Text style={styles.hintText}>
+            Cada juego empieza con {STARTING_HINTS} pistas para la partida libre, y ganar su reto del día te da una más
+          </Text>
           {doneToday > 0 && <ShareButton text={shareText(daily)} label="Compartir mi día" />}
         </View>
 

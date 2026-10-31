@@ -35,11 +35,11 @@ export async function loadDaily(): Promise<DailyLog> {
 export async function recordDaily(game: string, won: boolean, seconds?: number, detail?: string) {
   const log = await loadDaily();
   const today = dateKey();
-  // Winning a game's challenge earns a hint, once per game and day.
+  // Winning a game's challenge earns that game a hint, once per day.
   const earnsHint = won && !log[today]?.[game]?.won;
   log[today] = { ...log[today], [game]: { won, seconds, detail } };
   await AsyncStorage.setItem(KEY, JSON.stringify(log));
-  if (earnsHint) await addHint();
+  if (earnsHint) await addHint(game);
   listeners.forEach((notify) => notify());
 }
 
