@@ -25,6 +25,7 @@ export const GAME_THEMES: Record<string, GameTheme> = {
   deslizante: { main: '#5C940D', soft: '#E9FAC8', bg: '#F6FDE9' },
   criptograma: { main: '#8D5524', soft: '#F5E6D3', bg: '#FBF6EF' },
   logros: { main: '#E67700', soft: '#FFF3BF', bg: '#FFFAE8' },
+  estadisticas: { main: '#1971C2', soft: '#D0EBFF', bg: '#EDF6FF' },
   ajustes: { main: '#5F3DC4', soft: '#E5DBFF', bg: '#F3F0FF' },
 };
 

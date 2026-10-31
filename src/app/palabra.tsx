@@ -68,7 +68,7 @@ export default function PalabraScreen() {
   useEffect(() => {
     if (!loaded || !over || finished) return;
     setFinished(true);
-    recordResult('palabra', won);
+    recordResult('palabra', won, undefined, won ? guesses.length : undefined);
     if (!daily) completeLevel('palabra', level, stage);
     if (daily) {
       // Coloured squares of every guess, without the letters, for sharing.

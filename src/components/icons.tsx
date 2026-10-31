@@ -126,6 +126,16 @@ export function CrossGlyph({ ink }: GlyphProps) {
   return <Path d="M26 26 L74 74 M74 26 L26 74" fill="none" stroke={ink} strokeWidth={14} strokeLinecap="round" />;
 }
 
+export function ChartGlyph({ ink }: GlyphProps) {
+  return (
+    <G>
+      <Rect x={14} y={52} width={18} height={34} rx={4} fill={ink} />
+      <Rect x={41} y={30} width={18} height={56} rx={4} fill={ink} />
+      <Rect x={68} y={14} width={18} height={72} rx={4} fill={ink} />
+    </G>
+  );
+}
+
 export function GearGlyph({ ink }: GlyphProps) {
   // Eight teeth around a ring.
   const teeth = Array.from({ length: 8 }, (_, k) => k * 45);

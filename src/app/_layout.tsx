@@ -69,6 +69,7 @@ export default function RootLayout() {
           <Stack.Screen name="deslizante" options={{ title: 'Puzzle deslizante' }} />
           <Stack.Screen name="criptograma" options={{ title: 'Criptograma' }} />
           <Stack.Screen name="logros" options={{ title: 'Logros' }} />
+          <Stack.Screen name="estadisticas" options={{ title: 'Estadísticas' }} />
           <Stack.Screen name="ajustes" options={{ title: 'Ajustes' }} />
         </Stack>
       </TextScaleContext.Provider>

@@ -16,7 +16,7 @@ function wins(stats: Record<string, Stats>, game?: string) {
 }
 
 /** Longest run of consecutive days with at least one daily challenge done. */
-function longestStreak(daily: DailyLog) {
+export function longestStreak(daily: DailyLog) {
   const days = Object.keys(daily)
     .filter((d) => Object.keys(daily[d]).length > 0)
     .sort();

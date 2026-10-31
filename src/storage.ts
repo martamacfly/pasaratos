@@ -1,7 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
 
-export type Stats = { played: number; won: number; best?: number };
+/**
+ * `time`: seconds spent in finished games with a clock (counted since it was added).
+ * `dist`: for Palabra oculta, how many words were guessed at each attempt (index 0 = first).
+ */
+export type Stats = { played: number; won: number; best?: number; time?: number; dist?: number[] };
 
 const STATS_KEY = 'stats';
 
@@ -20,15 +24,21 @@ export async function loadStats(): Promise<Record<string, Stats>> {
 
 /**
  * Records a finished game. `id` identifies the variant (e.g. "sudoku:facil"),
- * so best times are only compared within the same difficulty or size.
+ * so best times are only compared within the same difficulty or size. `attempts` is how many tries a
+ * won game took, for games that have them.
  */
-export async function recordResult(id: string, won: boolean, seconds?: number) {
+export async function recordResult(id: string, won: boolean, seconds?: number, attempts?: number) {
   const all = await loadStats();
   const s = all[id] ?? { played: 0, won: 0 };
   s.played++;
+  if (seconds !== undefined) s.time = (s.time ?? 0) + seconds;
   if (won) {
     s.won++;
     if (seconds !== undefined && (s.best === undefined || seconds < s.best)) s.best = seconds;
+    if (attempts !== undefined) {
+      s.dist = s.dist ?? [];
+      s.dist[attempts - 1] = (s.dist[attempts - 1] ?? 0) + 1;
+    }
   }
   all[id] = s;
   await AsyncStorage.setItem(STATS_KEY, JSON.stringify(all));

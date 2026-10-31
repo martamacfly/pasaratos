@@ -5,7 +5,7 @@ import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { CheckGlyph, CrossGlyph, GameIcon, GearGlyph, Glyph, MedalGlyph } from '@/components/icons';
+import { ChartGlyph, CheckGlyph, CrossGlyph, GameIcon, GearGlyph, Glyph, MedalGlyph } from '@/components/icons';
 import { loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
@@ -83,6 +83,16 @@ export default function Home() {
               <Text style={styles.medalsText}>
                 {medals.unlocked}/{medals.total}
               </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Estadísticas"
+              onPress={() => router.push('/estadisticas')}
+              style={({ pressed }) => [styles.medals, styles.gear, pressed && { opacity: 0.8 }]}
+            >
+              <Glyph size={24}>
+                <ChartGlyph ink="#fff" />
+              </Glyph>
             </Pressable>
             <Pressable
               accessibilityRole="button"
