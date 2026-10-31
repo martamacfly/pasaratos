@@ -30,7 +30,12 @@ export function AchievementToast({ list, onClose }: { list: Achievement[]; onClo
           <Text style={styles.kicker}>{list.length > 1 ? `¡${list.length} LOGROS NUEVOS!` : '¡LOGRO NUEVO!'}</Text>
           <Text style={styles.title}>{list.map((a) => a.title).join(' · ')}</Text>
           <Text style={styles.desc}>{first.desc}</Text>
-          <ShareButton text={achievementShareText(first)} label="Compartir logro" style={{ marginTop: 6 }} />
+          <ShareButton
+            text={achievementShareText(first)}
+            achievement={first}
+            label="Compartir logro"
+            style={{ marginTop: 6 }}
+          />
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} hitSlop={10}>
           <Text style={styles.close}>✕</Text>

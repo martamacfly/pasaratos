@@ -1,4 +1,5 @@
 import { usePathname } from 'expo-router';
+import type { Achievement } from '@/achievements';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
@@ -122,10 +123,13 @@ export function HintButton({ onHint, style }: { onHint: () => boolean; style?: V
 /** Opens the share menu (social networks, copy, system share sheet) for `text`. */
 export function ShareButton({
   text,
+  achievement,
   label = 'Compartir resultado',
   style,
 }: {
   text: string;
+  /** Lets the menu share a picture of this achievement too. */
+  achievement?: Achievement;
   label?: string;
   style?: ViewStyle;
 }) {
@@ -133,7 +137,7 @@ export function ShareButton({
   return (
     <>
       <Button label={label} onPress={() => setOpen(true)} style={style} />
-      {open && <ShareSheet text={text} onClose={() => setOpen(false)} />}
+      {open && <ShareSheet text={text} achievement={achievement} onClose={() => setOpen(false)} />}
     </>
   );
 }

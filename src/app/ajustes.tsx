@@ -1,5 +1,6 @@
+import Constants from 'expo-constants';
 import { type ReactNode, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { FONTS, Text } from '@/components/AppText';
 import { Button } from '@/components/ui';
 import { eraseProgress, exportBackup, importBackup, restartApp } from '@/backup';
@@ -10,6 +11,8 @@ import { REMINDERS_AVAILABLE, scheduleReminder } from '@/reminder';
 import { type Settings, updateSettings, useSettings } from '@/settings';
 import { share } from '@/share';
 import { colors, radius } from '@/theme';
+
+const CREATORS_URL = 'https://martamacfly.github.io/piconeratech';
 
 const THEMES: { value: Settings['theme']; label: string }[] = [
   { value: 'auto', label: 'Automático' },
@@ -195,6 +198,23 @@ export default function AjustesScreen() {
             Los logros se calculan a partir de tu progreso, así que también vuelven a cero.
           </Text>
         </Section>
+
+        <Section title="Acerca de">
+          <Row label="Versión">
+            <Text style={styles.value}>{Constants.expoConfig?.version ?? '—'}</Text>
+          </Row>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(CREATORS_URL).catch(() => {})}
+            style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.desc}>Creado por</Text>
+              <Text style={[styles.label, { color: theme.main }]}>Piconera Tech</Text>
+            </View>
+            <Text style={[styles.label, { color: theme.main }]}>›</Text>
+          </Pressable>
+        </Section>
       </View>
     </ScrollView>
   );
@@ -276,6 +296,7 @@ const styles = StyleSheet.create({
   stacked: { gap: 10 },
   label: { fontSize: 16, fontWeight: '800', color: colors.text },
   desc: { fontSize: 13, color: colors.muted, fontWeight: '500' },
+  value: { fontSize: 16, fontWeight: '800', color: colors.muted },
   note: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
   segments: { flexDirection: 'row', backgroundColor: colors.bg, borderRadius: 12, padding: 3, gap: 3 },
   segment: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 9 },

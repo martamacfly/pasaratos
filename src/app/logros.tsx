@@ -64,7 +64,7 @@ export default function LogrosScreen() {
                 {a.unlocked && (
                   <View style={styles.unlockedRow}>
                     <Text style={[styles.tier, { color: TIER_COLORS[a.tier] }]}>{a.tier.toUpperCase()}</Text>
-                    <ShareLink text={achievementShareText(a)} />
+                    <ShareLink text={achievementShareText(a)} achievement={a} />
                   </View>
                 )}
               </View>
@@ -76,7 +76,7 @@ export default function LogrosScreen() {
 }
 
 /** Small "Compartir" link that opens the share menu. */
-function ShareLink({ text }: { text: string }) {
+function ShareLink({ text, achievement }: { text: string; achievement: Achievement }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -88,7 +88,7 @@ function ShareLink({ text }: { text: string }) {
       >
         <Text style={styles.shareLink}>Compartir</Text>
       </Pressable>
-      {open && <ShareSheet text={text} onClose={() => setOpen(false)} />}
+      {open && <ShareSheet text={text} achievement={achievement} onClose={() => setOpen(false)} />}
     </>
   );
 }
