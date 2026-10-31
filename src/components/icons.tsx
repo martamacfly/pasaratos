@@ -413,11 +413,20 @@ const GAME_ICONS: Record<string, { bg: string; draw: () => ReactNode }> = {
 };
 
 export function GameIcon({ id, size, tile = true }: { id: string; size: number; tile?: boolean }) {
-  const icon = GAME_ICONS[id];
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
+      <GameIconParts id={id} tile={tile} />
+    </Svg>
+  );
+}
+
+/** A game's tile and drawing in its 100×100 box, to place inside another drawing. */
+export function GameIconParts({ id, tile = true }: { id: string; tile?: boolean }) {
+  const icon = GAME_ICONS[id];
+  return (
+    <G>
       {tile && <Rect width={100} height={100} rx={22} fill={icon.bg} />}
       {icon.draw()}
-    </Svg>
+    </G>
   );
 }

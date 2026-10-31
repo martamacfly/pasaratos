@@ -1,16 +1,16 @@
 import { usePathname } from 'expo-router';
-import type { Achievement } from '@/achievements';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
 import { CelebrateContext, LevelInfoContext } from '@/components/GameLayout';
+import type { ShareCardData } from '@/components/ShareCard';
 import { ShareSheet } from '@/components/ShareSheet';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { buzz, tap } from '@/haptics';
 import { spendHint, useHints } from '@/hints';
 import { useSettings } from '@/settings';
-import { levelShareText } from '@/social';
+import { dailyGameCard, levelCard, levelShareText } from '@/social';
 import { colors, tone } from '@/theme';
 
 /** Buttons take the colour of the game on screen. */
@@ -65,7 +65,9 @@ export function Banner({ text, tone = 'success' }: { text: string; tone?: 'succe
       <View style={[styles.banner, { backgroundColor: tone === 'success' ? colors.success : colors.danger }]}>
         <Text style={styles.bannerText}>{text}</Text>
       </View>
-      {tone === 'success' && info && <ShareButton text={levelShareText(info, text)} label="Compartir" />}
+      {tone === 'success' && info && (
+        <ShareButton text={levelShareText(info, text)} card={levelCard(info, text)} label="Compartir" />
+      )}
     </>
   );
 }
@@ -123,13 +125,13 @@ export function HintButton({ onHint, style }: { onHint: () => boolean; style?: V
 /** Opens the share menu (social networks, copy, system share sheet) for `text`. */
 export function ShareButton({
   text,
-  achievement,
+  card,
   label = 'Compartir resultado',
   style,
 }: {
   text: string;
-  /** Lets the menu share a picture of this achievement too. */
-  achievement?: Achievement;
+  /** Lets the menu share a picture too. */
+  card?: ShareCardData;
   label?: string;
   style?: ViewStyle;
 }) {
@@ -137,7 +139,7 @@ export function ShareButton({
   return (
     <>
       <Button label={label} onPress={() => setOpen(true)} style={style} />
-      {open && <ShareSheet text={text} achievement={achievement} onClose={() => setOpen(false)} />}
+      {open && <ShareSheet text={text} card={card} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -155,7 +157,13 @@ export function DailyHeader() {
     <View style={[styles.daily, { backgroundColor: theme.soft }]}>
       <Text style={[styles.dailyLabel, { color: theme.main }]}>RETO DEL DÍA</Text>
       <Text style={styles.dailyText}>{dateLabel()}</Text>
-      {done && <ShareButton text={shareText(log, game)} style={{ alignSelf: 'stretch', marginTop: 6 }} />}
+      {done && (
+        <ShareButton
+          text={shareText(log, game)}
+          card={dailyGameCard(game, done)}
+          style={{ alignSelf: 'stretch', marginTop: 6 }}
+        />
+      )}
     </View>
   );
 }

@@ -3,16 +3,16 @@ import * as Sharing from 'expo-sharing';
 import type { ComponentRef, RefObject } from 'react';
 import { Platform, type View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
-import type { Achievement } from '@/achievements';
-import { CARD_COLORS, TIER_INK, TIER_LABEL } from '@/components/AchievementCard';
 import { FONTS } from '@/components/AppText';
+import { BADGE_ID, BADGE_SIZE, CARD_COLORS, type ShareCardData } from '@/components/ShareCard';
 import { SITE_URL } from '@/games/catalog';
 
-// Shares an achievement as a picture. Phones take a snapshot of the card on screen (AchievementCard);
-// the web draws the same design on a canvas, since a snapshot of the page isn't reliable there.
+// Shares a ShareCard as a picture. Phones take a snapshot of the card on screen and open the system
+// share sheet, where the player picks the social network. The web draws the same design on a canvas
+// (a snapshot of the page isn't reliable there), copying the badge's drawing from the card on screen.
 
 const SIZE = 1080;
-const FILE_NAME = 'pasaratos-logro.png';
+const FILE_NAME = 'pasaratos.png';
 
 /** Whether the picture can be handed to other apps here; otherwise the web downloads it. */
 export function canShareImage() {
@@ -21,17 +21,17 @@ export function canShareImage() {
   return !!probe && !!navigator.canShare?.({ files: [probe] });
 }
 
-export async function shareAchievementImage(
-  a: Achievement,
-  card: RefObject<ComponentRef<typeof View> | null>,
+export async function shareCardImage(
+  card: ShareCardData,
+  view: RefObject<ComponentRef<typeof View> | null>,
 ): Promise<'shared' | 'downloaded' | 'failed'> {
   try {
     if (Platform.OS !== 'web') {
-      const uri = await captureRef(card, { format: 'png', quality: 1, width: SIZE, height: SIZE, result: 'tmpfile' });
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir logro' });
+      const uri = await captureRef(view, { format: 'png', quality: 1, width: SIZE, height: SIZE, result: 'tmpfile' });
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir en…' });
       return 'shared';
     }
-    const blob = await drawAchievement(a);
+    const blob = await drawCard(card);
     const file = new File([blob], FILE_NAME, { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
       await navigator.share({ files: [file], text: SITE_URL });
@@ -56,6 +56,23 @@ const loadImage = (src: string) =>
     img.src = src;
   });
 
+/** The badge drawn on the card on screen, as an image. */
+async function badgeImage() {
+  const svg = document.getElementById(BADGE_ID)?.querySelector('svg');
+  if (!svg) return null;
+  const copy = svg.cloneNode(true) as SVGSVGElement;
+  copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  copy.setAttribute('width', String(BADGE_SIZE));
+  copy.setAttribute('height', String(BADGE_SIZE));
+  const blob = new Blob([new XMLSerializer().serializeToString(copy)], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  try {
+    return await loadImage(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 /** Lines of `text` that fit in `width` at the context's current font. */
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number) {
   const lines: string[] = [];
@@ -70,8 +87,8 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, width: number) {
   return [...lines, line];
 }
 
-/** The card of AchievementCard, drawn on a 1080 px canvas. */
-async function drawAchievement(a: Achievement): Promise<Blob> {
+/** The ShareCard design on a 1080 px canvas. */
+async function drawCard(card: ShareCardData): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = SIZE;
   canvas.height = SIZE;
@@ -96,49 +113,30 @@ async function drawAchievement(a: Achievement): Promise<Blob> {
   ctx.drawImage(logo, 80, 80, 130, 130);
   ctx.restore();
   ctx.fillStyle = '#fff';
-  ctx.textBaseline = 'alphabetic';
   ctx.font = font(64, FONTS.black);
   ctx.fillText('Pasaratos', 238, 148);
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = font(34, FONTS.semibold);
   ctx.fillText('Pasatiempos para cada rato', 238, 192);
 
-  // Medal: the paths of MedalGlyph, scaled from its 100×100 box.
-  ctx.save();
-  ctx.translate(340, 230);
-  ctx.scale(4, 4);
-  ctx.fillStyle = '#E03131';
-  ctx.fill(new Path2D('M30 6 L44 40 L36 44 L22 10 Z'));
-  ctx.fillStyle = '#1971C2';
-  ctx.fill(new Path2D('M70 6 L56 40 L64 44 L78 10 Z'));
-  ctx.fillStyle = TIER_INK[a.tier];
-  ctx.beginPath();
-  ctx.arc(50, 64, 30, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(50, 64, 21, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.fill(new Path2D('M50 50 L54 59 L64 60 L57 67 L59 77 L50 72 L41 77 L43 67 L36 60 L46 59 Z'));
-  ctx.restore();
+  const badge = await badgeImage();
+  if (badge) ctx.drawImage(badge, (SIZE - BADGE_SIZE) / 2, 270, BADGE_SIZE, BADGE_SIZE);
 
-  // Texts, centred.
+  // Texts, centred; the title shrinks if it is too long for one line.
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = font(38, FONTS.black);
   ctx.letterSpacing = '6px';
-  ctx.fillText('¡LOGRO DESBLOQUEADO!', SIZE / 2, 700);
+  ctx.fillText(card.kicker, SIZE / 2, 725);
   ctx.letterSpacing = '0px';
   ctx.fillStyle = '#fff';
-  ctx.font = font(88, FONTS.black);
-  ctx.fillText(a.title, SIZE / 2, 800);
+  let titleSize = 80;
+  do ctx.font = font(titleSize, FONTS.black);
+  while (ctx.measureText(card.title).width > SIZE - 140 && (titleSize -= 4) > 40);
+  ctx.fillText(card.title, SIZE / 2, 820);
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = font(40, FONTS.semibold);
-  wrap(ctx, `${a.desc} · ${TIER_LABEL[a.tier]}`, SIZE - 160).forEach((line, k) =>
-    ctx.fillText(line, SIZE / 2, 866 + k * 50),
-  );
+  wrap(ctx, card.subtitle, SIZE - 160).forEach((line, k) => ctx.fillText(line, SIZE / 2, 885 + k * 50));
   ctx.font = font(30, FONTS.bold);
   ctx.fillText(SITE_URL.replace('https://', ''), SIZE / 2, SIZE - 56);
 

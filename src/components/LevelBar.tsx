@@ -8,7 +8,7 @@ import { confirm } from '@/confirm';
 import { useGameTheme } from '@/gameTheme';
 import { isUnlocked, LEVEL_COUNT, useLevelProgress } from '@/levels';
 import { useSettings } from '@/settings';
-import { levelShareText } from '@/social';
+import { levelCard, levelShareText } from '@/social';
 import { colors, tone } from '@/theme';
 
 /**
@@ -93,6 +93,7 @@ export function LevelBar({
         )}
         <ShareButton
           text={levelShareText({ game, variant, level })}
+          card={levelCard({ game, variant, level })}
           label="Compartir"
           style={{ alignSelf: 'stretch' }}
         />

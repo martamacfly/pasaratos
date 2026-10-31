@@ -1,35 +1,28 @@
 import { type ComponentRef, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import type { Achievement } from '@/achievements';
-import { canShareImage, shareAchievementImage } from '@/achievementImage';
-import { AchievementCard } from '@/components/AchievementCard';
 import { Text } from '@/components/AppText';
+import { ShareCard, type ShareCardData } from '@/components/ShareCard';
 import { canShareNatively, copy, NETWORKS, share, shareTo } from '@/share';
+import { canShareImage, shareCardImage } from '@/shareImage';
 import { colors, radius } from '@/theme';
 
 /**
- * Menu for sharing a text: straight to a social network, copied, or through the system's own
- * share sheet (for Instagram and any other app) where there is one. With an `achievement`, it can
- * share a picture of it with the logo instead.
+ * Menu for sharing a result or an achievement. As text: straight to a social network, copied, or
+ * through the system's own share sheet where there is one. With a `card`, also as a picture with the
+ * logo, which goes through the system's share sheet (where Instagram, WhatsApp, X… are) or, on
+ * computers, is downloaded to upload anywhere.
  */
-export function ShareSheet({
-  text,
-  achievement,
-  onClose,
-}: {
-  text: string;
-  achievement?: Achievement;
-  onClose: () => void;
-}) {
+export function ShareSheet({ text, card, onClose }: { text: string; card?: ShareCardData; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const [mode, setMode] = useState<'text' | 'image'>('text');
+  const [mode, setMode] = useState<'text' | 'image'>(card ? 'image' : 'text');
   const [status, setStatus] = useState<string | null>(null);
-  const card = useRef<ComponentRef<typeof View>>(null);
+  const cardView = useRef<ComponentRef<typeof View>>(null);
+  const imageShares = canShareImage();
 
   async function sendImage() {
-    if (!achievement) return;
+    if (!card) return;
     setStatus('Preparando la imagen…');
-    const result = await shareAchievementImage(achievement, card);
+    const result = await shareCardImage(card, cardView);
     setStatus(
       result === 'downloaded'
         ? 'Imagen descargada: súbela a la red que quieras'
@@ -46,7 +39,7 @@ export function ShareSheet({
         <Pressable style={styles.card} onPress={() => {}}>
           <ScrollView contentContainerStyle={{ gap: 10 }}>
             <Text style={styles.title}>Compartir</Text>
-            {achievement && (
+            {card && (
               <View style={styles.tabs}>
                 {(['text', 'image'] as const).map((m) => (
                   <Pressable
@@ -63,19 +56,26 @@ export function ShareSheet({
                 ))}
               </View>
             )}
-            {achievement && mode === 'image' ? (
+            {card && mode === 'image' ? (
               <>
                 <View style={{ alignItems: 'center' }}>
-                  <AchievementCard ref={card} achievement={achievement} size={260} />
+                  <ShareCard ref={cardView} card={card} size={260} />
                 </View>
                 <Pressable
                   accessibilityRole="button"
                   onPress={sendImage}
                   style={({ pressed }) => [styles.network, styles.primary, pressed && styles.pressed]}
                 >
-                  <Text style={styles.networkText}>{canShareImage() ? 'Compartir imagen' : 'Descargar imagen'}</Text>
+                  <Text style={styles.networkText}>
+                    {imageShares ? 'Compartir imagen en redes' : 'Descargar imagen'}
+                  </Text>
                 </Pressable>
-                {status && <Text style={styles.status}>{status}</Text>}
+                <Text style={styles.status}>
+                  {status ??
+                    (imageShares
+                      ? 'Elige Instagram, WhatsApp, X… en el menú que se abre.'
+                      : 'Descárgala y súbela a la red social que quieras.')}
+                </Text>
               </>
             ) : (
               <>

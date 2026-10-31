@@ -4,7 +4,7 @@ import type { Achievement } from '@/achievements';
 import { Text } from '@/components/AppText';
 import { Glyph, MedalGlyph } from '@/components/icons';
 import { ShareButton } from '@/components/ui';
-import { achievementShareText } from '@/social';
+import { achievementCard, achievementShareText } from '@/social';
 import { colors, radius, tone } from '@/theme';
 
 const TIER_COLORS = { bronce: tone('#C8793C'), plata: tone('#9AA5B1'), oro: tone('#F2B705') };
@@ -32,7 +32,7 @@ export function AchievementToast({ list, onClose }: { list: Achievement[]; onClo
           <Text style={styles.desc}>{first.desc}</Text>
           <ShareButton
             text={achievementShareText(first)}
-            achievement={first}
+            card={achievementCard(first)}
             label="Compartir logro"
             style={{ marginTop: 6 }}
           />

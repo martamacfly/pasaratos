@@ -4,9 +4,10 @@ import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { type Achievement, loadAchievements, type Tier } from '@/achievements';
 import { Glyph, MedalGlyph } from '@/components/icons';
+import type { ShareCardData } from '@/components/ShareCard';
 import { ShareSheet } from '@/components/ShareSheet';
 import { ShareButton } from '@/components/ui';
-import { achievementShareText, achievementsSummaryText } from '@/social';
+import { achievementCard, achievementShareText, achievementsSummaryCard, achievementsSummaryText } from '@/social';
 import { colors, radius, tone } from '@/theme';
 
 const TIER_COLORS: Record<Tier, string> = { bronce: tone('#C8793C'), plata: tone('#9AA5B1'), oro: tone('#F2B705') };
@@ -35,7 +36,12 @@ export default function LogrosScreen() {
           <View style={[styles.fill, { width: `${list.length ? (unlocked / list.length) * 100 : 0}%` }]} />
         </View>
         {unlocked > 0 && (
-          <ShareButton text={achievementsSummaryText(list)} label="Compartir mis logros" style={{ marginTop: 10 }} />
+          <ShareButton
+            text={achievementsSummaryText(list)}
+            card={achievementsSummaryCard(list)}
+            label="Compartir mis logros"
+            style={{ marginTop: 10 }}
+          />
         )}
       </View>
 
@@ -64,7 +70,7 @@ export default function LogrosScreen() {
                 {a.unlocked && (
                   <View style={styles.unlockedRow}>
                     <Text style={[styles.tier, { color: TIER_COLORS[a.tier] }]}>{a.tier.toUpperCase()}</Text>
-                    <ShareLink text={achievementShareText(a)} achievement={a} />
+                    <ShareLink text={achievementShareText(a)} card={achievementCard(a)} />
                   </View>
                 )}
               </View>
@@ -76,7 +82,7 @@ export default function LogrosScreen() {
 }
 
 /** Small "Compartir" link that opens the share menu. */
-function ShareLink({ text, achievement }: { text: string; achievement: Achievement }) {
+function ShareLink({ text, card }: { text: string; card: ShareCardData }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -88,7 +94,7 @@ function ShareLink({ text, achievement }: { text: string; achievement: Achieveme
       >
         <Text style={styles.shareLink}>Compartir</Text>
       </Pressable>
-      {open && <ShareSheet text={text} achievement={achievement} onClose={() => setOpen(false)} />}
+      {open && <ShareSheet text={text} card={card} onClose={() => setOpen(false)} />}
     </>
   );
 }
