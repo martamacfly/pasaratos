@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { PathLines } from '@/components/PathLines';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { adjacent, type Colores, coloresSolved, generateColores } from '@/games/caminos';
 import { withSeed } from '@/games/random';
@@ -106,6 +107,24 @@ export default function ColoresScreen() {
       }),
   });
 
+  // Hint: draws the right line for one pair, cutting any other line in its way.
+  function hint() {
+    const same = (a: number[], b: number[]) => a.join() === b.join() || [...a].reverse().join() === b.join();
+    const k = puzzle.solution.findIndex((sol, j) => !same(lines[j], sol));
+    if (k === -1) return false;
+    const sol = puzzle.solution[k];
+    const cells = new Set(sol);
+    setDrawing((d) => ({
+      active: null,
+      lines: d.lines.map((l, j) => {
+        if (j === k) return sol;
+        const cut = l.findIndex((c) => cells.has(c));
+        return cut === -1 ? l : l.slice(0, cut);
+      }),
+    }));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -146,44 +165,47 @@ export default function ColoresScreen() {
         </>
       }
       board={
-        <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
-          {Array.from({ length: n * n }, (_, i) => (
-            <View
-              key={i}
-              pointerEvents="none"
-              style={[
-                styles.cell,
-                { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
-                owner.has(i) && { backgroundColor: PALETTE[owner.get(i)!] + '2E' },
-              ]}
-            />
-          ))}
-          {lines.map((l, k) => (
-            <PathLines key={k} path={l} n={n} cell={cell} color={PALETTE[k]} />
-          ))}
-          {[...dotColor].map(([c, k]) => {
-            const size = cell * 0.66;
-            return (
+        <BoardFrame>
+          <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
+            {Array.from({ length: n * n }, (_, i) => (
               <View
-                key={c}
+                key={i}
                 pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  width: size,
-                  height: size,
-                  borderRadius: size / 2,
-                  backgroundColor: PALETTE[k],
-                  left: (c % n) * cell + (cell - size) / 2,
-                  top: Math.floor(c / n) * cell + (cell - size) / 2,
-                }}
+                style={[
+                  styles.cell,
+                  { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
+                  owner.has(i) && { backgroundColor: PALETTE[owner.get(i)!] + '2E' },
+                ]}
               />
-            );
-          })}
-        </View>
+            ))}
+            {lines.map((l, k) => (
+              <PathLines key={k} path={l} n={n} cell={cell} color={PALETTE[k]} />
+            ))}
+            {[...dotColor].map(([c, k]) => {
+              const size = cell * 0.66;
+              return (
+                <View
+                  key={c}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    backgroundColor: PALETTE[k],
+                    left: (c % n) * cell + (cell - size) / 2,
+                    top: Math.floor(c / n) * cell + (cell - size) / 2,
+                  }}
+                />
+              );
+            })}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
           {solved && <Banner text={`¡Todo conectado en ${formatTime(seconds)}!`} />}
+          {!daily && !solved && <HintButton onHint={hint} />}
           {solved ? (
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/colores')} />

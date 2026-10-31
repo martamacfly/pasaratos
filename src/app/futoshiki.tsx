@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { generate, ineqConflicts } from '@/games/futoshiki';
@@ -14,7 +14,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { useUndo } from '@/hooks/useUndo';
 import { completeLevel, LEVEL_COUNT, levelSeed } from '@/levels';
 import { recordResult, useAutosave, useStats } from '@/storage';
-import { colors, radius } from '@/theme';
+import { colors } from '@/theme';
 
 type Level = 'facil' | 'medio' | 'dificil';
 // 6×6 takes seconds to generate, so the hardest level is a 5×5 with the fewest signs possible.
@@ -83,6 +83,16 @@ export default function FutoshikiScreen() {
   function input(v: number) {
     if (selected === null || givens[selected] || solved) return;
     setBoard((prev) => prev.map((x, i) => (i === selected ? v : x)));
+  }
+
+  // Hint: puts the right value in the selected cell if it needs one, otherwise in the first that does.
+  function hint() {
+    const needs = (i: number) => !givens[i] && board[i] !== solution[i];
+    const i = selected !== null && needs(selected) ? selected : board.findIndex((_, k) => needs(k));
+    if (i === -1) return false;
+    setBoard((prev) => prev.map((v, k) => (k === i ? solution[i] : v)));
+    setSelected(i);
+    return true;
   }
 
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
@@ -196,6 +206,7 @@ export default function FutoshikiScreen() {
             <>
               <NumberPad max={n} onPress={input} width={panel} />
               <Button label="Deshacer" variant="secondary" onPress={undo} style={{ opacity: canUndo ? 1 : 0.5 }} />
+              {!daily && <HintButton onHint={hint} />}
             </>
           )}
         </View>
@@ -220,9 +231,11 @@ const styles = StyleSheet.create({
   },
   cell: {
     backgroundColor: colors.card,
-    borderRadius: radius / 2,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: colors.border,
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgba(0,0,0,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },

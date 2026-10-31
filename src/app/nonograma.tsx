@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
@@ -76,6 +77,14 @@ export default function NonogramaScreen() {
     setMarks((prev) => prev.map((m, j) => (j === i ? (m === target ? 0 : target) : m)));
   }
 
+  // Hint: paints (or crosses out) the first cell that doesn't match the picture.
+  function hint() {
+    const i = marks.findIndex((m, k) => (m === 1) !== picture[k]);
+    if (i === -1) return false;
+    setMarks((prev) => prev.map((m, k) => (k === i ? (picture[i] ? 1 : 2) : m)));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -113,42 +122,44 @@ export default function NonogramaScreen() {
         </>
       }
       board={
-        <View>
-          <View style={{ flexDirection: 'row', marginLeft: clueSpace }}>
-            {cols.map((clue, c) => (
-              <View key={c} style={[styles.colClue, { width: cell, minHeight: clueSpace }]}>
-                {clue.map((v, k) => (
-                  <Text key={k} style={[styles.clue, { fontSize: Math.min(cell * 0.45, 15) }]}>
-                    {v}
-                  </Text>
-                ))}
+        <BoardFrame>
+          <View>
+            <View style={{ flexDirection: 'row', marginLeft: clueSpace }}>
+              {cols.map((clue, c) => (
+                <View key={c} style={[styles.colClue, { width: cell, minHeight: clueSpace }]}>
+                  {clue.map((v, k) => (
+                    <Text key={k} style={[styles.clue, { fontSize: Math.min(cell * 0.45, 15) }]}>
+                      {v}
+                    </Text>
+                  ))}
+                </View>
+              ))}
+            </View>
+            {rows.map((clue, r) => (
+              <View key={r} style={{ flexDirection: 'row' }}>
+                <View style={[styles.rowClue, { width: clueSpace, height: cell }]}>
+                  <Text style={[styles.clue, { fontSize: Math.min(cell * 0.45, 15) }]}>{clue.join(' ')}</Text>
+                </View>
+                {Array.from({ length: n }, (_, c) => {
+                  const i = r * n + c;
+                  return (
+                    <Pressable
+                      key={c}
+                      onPress={() => tap(i)}
+                      style={[
+                        styles.cell,
+                        { width: cell, height: cell, borderRightWidth: line(c), borderBottomWidth: line(r) },
+                        marks[i] === 1 && { backgroundColor: solved ? theme.main : colors.text },
+                      ]}
+                    >
+                      {marks[i] === 2 && <Text style={{ fontSize: cell * 0.45, color: colors.muted }}>✕</Text>}
+                    </Pressable>
+                  );
+                })}
               </View>
             ))}
           </View>
-          {rows.map((clue, r) => (
-            <View key={r} style={{ flexDirection: 'row' }}>
-              <View style={[styles.rowClue, { width: clueSpace, height: cell }]}>
-                <Text style={[styles.clue, { fontSize: Math.min(cell * 0.45, 15) }]}>{clue.join(' ')}</Text>
-              </View>
-              {Array.from({ length: n }, (_, c) => {
-                const i = r * n + c;
-                return (
-                  <Pressable
-                    key={c}
-                    onPress={() => tap(i)}
-                    style={[
-                      styles.cell,
-                      { width: cell, height: cell, borderRightWidth: line(c), borderBottomWidth: line(r) },
-                      marks[i] === 1 && { backgroundColor: solved ? theme.main : colors.text },
-                    ]}
-                  >
-                    {marks[i] === 2 && <Text style={{ fontSize: cell * 0.45, color: colors.muted }}>✕</Text>}
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
@@ -160,26 +171,29 @@ export default function NonogramaScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
-            <View style={styles.row}>
-              <Button
-                label="⬛ Pintar"
-                variant={crossMode ? 'secondary' : 'primary'}
-                onPress={() => setCrossMode(false)}
-                style={{ flex: 1 }}
-              />
-              <Button
-                label="✕ Tachar"
-                variant={crossMode ? 'primary' : 'secondary'}
-                onPress={() => setCrossMode(true)}
-                style={{ flex: 1 }}
-              />
-              <Button
-                label="Deshacer"
-                variant="secondary"
-                onPress={undo}
-                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
-              />
-            </View>
+            <>
+              <View style={styles.row}>
+                <Button
+                  label="⬛ Pintar"
+                  variant={crossMode ? 'secondary' : 'primary'}
+                  onPress={() => setCrossMode(false)}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  label="✕ Tachar"
+                  variant={crossMode ? 'primary' : 'secondary'}
+                  onPress={() => setCrossMode(true)}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  label="Deshacer"
+                  variant="secondary"
+                  onPress={undo}
+                  style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+                />
+              </View>
+              {!daily && <HintButton onHint={hint} />}
+            </>
           )}
         </View>
       }

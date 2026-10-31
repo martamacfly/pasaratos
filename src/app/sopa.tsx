@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { withSeed } from '@/games/random';
@@ -91,6 +92,15 @@ export default function SopaScreen() {
     }
   }
 
+  // Hint: marks one of the words still to find.
+  function hint() {
+    const word = words.find((w) => !found.includes(w.word));
+    if (!word) return false;
+    setFound((f) => [...f, word.word]);
+    setStart(null);
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -132,24 +142,26 @@ export default function SopaScreen() {
         </>
       }
       board={
-        <View style={[styles.grid, { width: boardSize, height: boardSize }]}>
-          {letters.map((l, i) => (
-            <Pressable
-              key={i}
-              onPress={() => tap(i)}
-              style={[
-                styles.cell,
-                { width: cell, height: cell },
-                colorOf.has(i) && { backgroundColor: colorOf.get(i) },
-                start === i && { backgroundColor: theme.main },
-              ]}
-            >
-              <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: start === i ? '#fff' : colors.text }}>
-                {l}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <BoardFrame>
+          <View style={[styles.grid, { width: boardSize, height: boardSize }]}>
+            {letters.map((l, i) => (
+              <Pressable
+                key={i}
+                onPress={() => tap(i)}
+                style={[
+                  styles.cell,
+                  { width: cell, height: cell },
+                  colorOf.has(i) && { backgroundColor: colorOf.get(i) },
+                  start === i && { backgroundColor: theme.main },
+                ]}
+              >
+                <Text style={{ fontSize: cell * 0.5, fontWeight: '700', color: start === i ? '#fff' : colors.text }}>
+                  {l}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
@@ -164,6 +176,7 @@ export default function SopaScreen() {
               );
             })}
           </View>
+          {!daily && !solved && <HintButton onHint={hint} />}
           {daily ? (
             solved && <Button label="Jugar partida libre" onPress={() => router.replace('/sopa')} />
           ) : (

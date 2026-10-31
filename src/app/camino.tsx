@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { PathLines } from '@/components/PathLines';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { adjacent, caminoSolved, generateCamino } from '@/games/caminos';
@@ -89,6 +90,16 @@ export default function CaminoScreen() {
       }),
   });
 
+  // Hint: keeps the part of the line that matches the solution and draws a few more cells of it.
+  function hint() {
+    const sol = puzzle.solution;
+    let k = 0;
+    while (k < path.length && path[k] === sol[k]) k++;
+    if (k >= sol.length) return false;
+    setPath(sol.slice(0, Math.min(Math.max(k, 1) + 3, sol.length)));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -127,47 +138,50 @@ export default function CaminoScreen() {
         </>
       }
       board={
-        <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
-          {Array.from({ length: n * n }, (_, i) => (
-            <View
-              key={i}
-              pointerEvents="none"
-              style={[
-                styles.cell,
-                { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
-                onPath.has(i) && { backgroundColor: solved ? colors.successSoft : theme.soft },
-              ]}
-            />
-          ))}
-          <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : theme.main} />
-          {Object.entries(clues).map(([c, num]) => {
-            const i = Number(c);
-            const size = cell * 0.62;
-            return (
+        <BoardFrame>
+          <View {...drag} style={[styles.board, { width: boardSize, height: boardSize }]}>
+            {Array.from({ length: n * n }, (_, i) => (
               <View
-                key={c}
+                key={i}
                 pointerEvents="none"
                 style={[
-                  styles.clue,
-                  {
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                    left: (i % n) * cell + (cell - size) / 2,
-                    top: Math.floor(i / n) * cell + (cell - size) / 2,
-                  },
-                  i === head && { borderWidth: 3, borderColor: colors.warning },
+                  styles.cell,
+                  { width: cell, height: cell, left: (i % n) * cell, top: Math.floor(i / n) * cell },
+                  onPath.has(i) && { backgroundColor: solved ? colors.successSoft : theme.soft },
                 ]}
-              >
-                <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
-              </View>
-            );
-          })}
-        </View>
+              />
+            ))}
+            <PathLines path={path} n={n} cell={cell} color={solved ? colors.success : theme.main} />
+            {Object.entries(clues).map(([c, num]) => {
+              const i = Number(c);
+              const size = cell * 0.62;
+              return (
+                <View
+                  key={c}
+                  pointerEvents="none"
+                  style={[
+                    styles.clue,
+                    {
+                      width: size,
+                      height: size,
+                      borderRadius: size / 2,
+                      left: (i % n) * cell + (cell - size) / 2,
+                      top: Math.floor(i / n) * cell + (cell - size) / 2,
+                    },
+                    i === head && { borderWidth: 3, borderColor: colors.warning },
+                  ]}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.48 }}>{num}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
           {solved && <Banner text={`¡Camino completo en ${formatTime(seconds)}!`} />}
+          {!daily && !solved && <HintButton onHint={hint} />}
           {solved ? (
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/camino')} />

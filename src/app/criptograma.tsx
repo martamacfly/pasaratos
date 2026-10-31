@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { generate, isLetter, type Level, LEVELS } from '@/games/criptograma';
@@ -103,6 +104,15 @@ export default function CriptogramaScreen() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // Hint: writes the right letter for the first number still wrong or empty.
+  function hint() {
+    const l = [...text].find((c) => isLetter(c) && !given.includes(c) && guesses[c] !== c);
+    if (!l) return false;
+    setGuesses((g) => ({ ...g, [l]: l }));
+    setSelected(null);
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -137,46 +147,49 @@ export default function CriptogramaScreen() {
         </>
       }
       board={
-        <View style={[styles.board, { width: size }]}>
-          {text.split(' ').map((word, w) => (
-            <View key={w} style={styles.word}>
-              {[...word].map((c, k) => {
-                const isGiven = given.includes(c);
-                const value = valueOf(c);
-                const clash = value && used[value] > 1 && !isGiven;
-                return (
-                  <Pressable
-                    key={k}
-                    disabled={isGiven || solved}
-                    onPress={() => setSelected(c)}
-                    style={[
-                      styles.cell,
-                      { width: cell },
-                      selected === c && { backgroundColor: theme.soft, borderColor: theme.main },
-                    ]}
-                  >
-                    <Text
+        <BoardFrame>
+          <View style={[styles.board, { width: size }]}>
+            {text.split(' ').map((word, w) => (
+              <View key={w} style={styles.word}>
+                {[...word].map((c, k) => {
+                  const isGiven = given.includes(c);
+                  const value = valueOf(c);
+                  const clash = value && used[value] > 1 && !isGiven;
+                  return (
+                    <Pressable
+                      key={k}
+                      disabled={isGiven || solved}
+                      onPress={() => setSelected(c)}
                       style={[
-                        styles.letter,
-                        { fontSize: cell * 0.6 },
-                        isGiven && { color: colors.text },
-                        !isGiven && { color: clash ? colors.danger : theme.main },
+                        styles.cell,
+                        { width: cell },
+                        selected === c && { backgroundColor: theme.soft, borderColor: theme.main },
                       ]}
                     >
-                      {value || ' '}
-                    </Text>
-                    <View style={[styles.line, { backgroundColor: isGiven ? colors.border : theme.main }]} />
-                    <Text style={[styles.code, { fontSize: cell * 0.36 }]}>{code[c]}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+                      <Text
+                        style={[
+                          styles.letter,
+                          { fontSize: cell * 0.6 },
+                          isGiven && { color: colors.text },
+                          !isGiven && { color: clash ? colors.danger : theme.main },
+                        ]}
+                      >
+                        {value || ' '}
+                      </Text>
+                      <View style={[styles.line, { backgroundColor: isGiven ? colors.border : theme.main }]} />
+                      <Text style={[styles.code, { fontSize: cell * 0.36 }]}>{code[c]}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
           {solved && <Banner text={`¡Descifrado en ${formatTime(seconds)}!`} />}
+          {!daily && !solved && <HintButton onHint={hint} />}
           {solved ? (
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/criptograma')} />

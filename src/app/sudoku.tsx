@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
@@ -87,6 +88,16 @@ export default function SudokuScreen() {
     setFinished(false);
   }
 
+  // Hint: puts the right value in the selected cell if it needs one, otherwise in the first that does.
+  function hint() {
+    const needs = (i: number) => game.puzzle[i] === 0 && board[i] !== game.solution[i];
+    const i = selected !== null && needs(selected) ? selected : board.findIndex((_, k) => needs(k));
+    if (i === -1) return false;
+    setBoard((prev) => prev.map((v, k) => (k === i ? game.solution[i] : v)));
+    setSelected(i);
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -135,54 +146,56 @@ export default function SudokuScreen() {
         </>
       }
       board={
-        <View style={[styles.grid, { width: size, height: size }]}>
-          {board.map((n, i) => {
-            const r = Math.floor(i / 9);
-            const c = i % 9;
-            const given = game.puzzle[i] !== 0;
-            const isSelected = i === selected;
-            const related = selected !== null && sameUnit(i, selected);
-            const sameNumber = n !== 0 && n === selectedValue;
-            return (
-              <Pressable
-                key={i}
-                onPress={() => setSelected(i)}
-                style={[
-                  styles.cell,
-                  {
-                    width: cell,
-                    height: cell,
-                    borderRightWidth: c === 8 ? 0 : c % 3 === 2 ? 2 : 0.5,
-                    borderBottomWidth: r === 8 ? 0 : r % 3 === 2 ? 2 : 0.5,
-                  },
-                  related && { backgroundColor: '#EEF2FF' },
-                  sameNumber && { backgroundColor: colors.accentSoft },
-                  isSelected && { backgroundColor: '#BAC8FF' },
-                ]}
-              >
-                {n !== 0 ? (
-                  <Text
-                    style={{
-                      fontSize: cell * 0.55,
-                      fontWeight: given ? '700' : '500',
-                      color: bad.has(i) && !given ? colors.danger : given ? colors.text : colors.accent,
-                    }}
-                  >
-                    {n}
-                  </Text>
-                ) : (
-                  <View style={styles.notes}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                      <Text key={d} style={[styles.note, { width: cell / 3 - 1, fontSize: cell * 0.22 }]}>
-                        {notes[i] & (1 << d) ? d : ''}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+        <BoardFrame>
+          <View style={[styles.grid, { width: size, height: size }]}>
+            {board.map((n, i) => {
+              const r = Math.floor(i / 9);
+              const c = i % 9;
+              const given = game.puzzle[i] !== 0;
+              const isSelected = i === selected;
+              const related = selected !== null && sameUnit(i, selected);
+              const sameNumber = n !== 0 && n === selectedValue;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setSelected(i)}
+                  style={[
+                    styles.cell,
+                    {
+                      width: cell,
+                      height: cell,
+                      borderRightWidth: c === 8 ? 0 : c % 3 === 2 ? 2 : 0.5,
+                      borderBottomWidth: r === 8 ? 0 : r % 3 === 2 ? 2 : 0.5,
+                    },
+                    related && { backgroundColor: '#EEF2FF' },
+                    sameNumber && { backgroundColor: colors.accentSoft },
+                    isSelected && { backgroundColor: '#BAC8FF' },
+                  ]}
+                >
+                  {n !== 0 ? (
+                    <Text
+                      style={{
+                        fontSize: cell * 0.55,
+                        fontWeight: given ? '700' : '500',
+                        color: bad.has(i) && !given ? colors.danger : given ? colors.text : colors.accent,
+                      }}
+                    >
+                      {n}
+                    </Text>
+                  ) : (
+                    <View style={styles.notes}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                        <Text key={d} style={[styles.note, { width: cell / 3 - 1, fontSize: cell * 0.22 }]}>
+                          {notes[i] & (1 << d) ? d : ''}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </BoardFrame>
       }
       side={
         solved ? (
@@ -225,6 +238,7 @@ export default function SudokuScreen() {
                 style={{ flex: 1 }}
               />
             </View>
+            {!daily && <HintButton onHint={hint} />}
           </View>
         )
       }
@@ -254,6 +268,8 @@ const styles = StyleSheet.create({
     borderColor: colors.text,
     backgroundColor: colors.card,
     boxSizing: 'content-box',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   cell: { alignItems: 'center', justifyContent: 'center', borderColor: colors.text },
   notes: { flexDirection: 'row', flexWrap: 'wrap', width: '100%', height: '100%', padding: 1 },

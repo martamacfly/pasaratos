@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
@@ -158,73 +159,75 @@ export default function AutodefinidoScreen() {
         </>
       }
       board={
-        <View style={styles.board}>
-          {cells.map((row, r) => (
-            <View key={r} style={{ flexDirection: 'row' }}>
-              {row.map((target, c) => {
-                const key = `${r},${c}`;
-                if (target.kind === 'block')
-                  return <View key={key} style={[styles.block, { width: cell, height: cell }]} />;
-                if (target.kind === 'clue') {
-                  const selected = target.clues.some((x) => x.entry === active);
+        <BoardFrame>
+          <View style={styles.board}>
+            {cells.map((row, r) => (
+              <View key={r} style={{ flexDirection: 'row' }}>
+                {row.map((target, c) => {
+                  const key = `${r},${c}`;
+                  if (target.kind === 'block')
+                    return <View key={key} style={[styles.block, { width: cell, height: cell }]} />;
+                  if (target.kind === 'clue') {
+                    const selected = target.clues.some((x) => x.entry === active);
+                    return (
+                      <Pressable
+                        key={key}
+                        onPress={() => tapCell(r, c)}
+                        style={[
+                          styles.clueCell,
+                          { width: cell, height: cell },
+                          selected && { backgroundColor: '#FFD43B' },
+                        ]}
+                      >
+                        {target.clues.map((x, k) => (
+                          <View
+                            key={k}
+                            style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: '#E0C55C' }]}
+                          >
+                            <Text
+                              style={[
+                                styles.clueText,
+                                { fontSize: Math.max(7, cell * (target.clues.length > 1 ? 0.15 : 0.18)) },
+                              ]}
+                              numberOfLines={target.clues.length > 1 ? 2 : 3}
+                              adjustsFontSizeToFit
+                            >
+                              {x.short}
+                            </Text>
+                            <Text style={[styles.arrow, { fontSize: Math.max(8, cell * 0.17) }]}>
+                              {x.dir === 'across' ? '▶' : '▼'}
+                            </Text>
+                          </View>
+                        ))}
+                      </Pressable>
+                    );
+                  }
+                  const isPos = r === pos[0] && c === pos[1];
+                  const wrong = checked && letters[r][c] && letters[r][c] !== target.letter;
                   return (
                     <Pressable
                       key={key}
                       onPress={() => tapCell(r, c)}
                       style={[
-                        styles.clueCell,
+                        styles.letterCell,
                         { width: cell, height: cell },
-                        selected && { backgroundColor: '#FFD43B' },
+                        activeCells.has(key) && { backgroundColor: theme.soft },
+                        isPos && { backgroundColor: theme.main + '66' },
+                        wrong && { backgroundColor: colors.dangerSoft },
                       ]}
                     >
-                      {target.clues.map((x, k) => (
-                        <View
-                          key={k}
-                          style={[styles.clueHalf, k > 0 && { borderTopWidth: 1, borderTopColor: '#E0C55C' }]}
-                        >
-                          <Text
-                            style={[
-                              styles.clueText,
-                              { fontSize: Math.max(7, cell * (target.clues.length > 1 ? 0.15 : 0.18)) },
-                            ]}
-                            numberOfLines={target.clues.length > 1 ? 2 : 3}
-                            adjustsFontSizeToFit
-                          >
-                            {x.short}
-                          </Text>
-                          <Text style={[styles.arrow, { fontSize: Math.max(8, cell * 0.17) }]}>
-                            {x.dir === 'across' ? '▶' : '▼'}
-                          </Text>
-                        </View>
-                      ))}
+                      <Text
+                        style={{ fontSize: cell * 0.5, fontWeight: '700', color: wrong ? colors.danger : colors.text }}
+                      >
+                        {letters[r][c]}
+                      </Text>
                     </Pressable>
                   );
-                }
-                const isPos = r === pos[0] && c === pos[1];
-                const wrong = checked && letters[r][c] && letters[r][c] !== target.letter;
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => tapCell(r, c)}
-                    style={[
-                      styles.letterCell,
-                      { width: cell, height: cell },
-                      activeCells.has(key) && { backgroundColor: theme.soft },
-                      isPos && { backgroundColor: theme.main + '66' },
-                      wrong && { backgroundColor: colors.dangerSoft },
-                    ]}
-                  >
-                    <Text
-                      style={{ fontSize: cell * 0.5, fontWeight: '700', color: wrong ? colors.danger : colors.text }}
-                    >
-                      {letters[r][c]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+                })}
+              </View>
+            ))}
+          </View>
+        </BoardFrame>
       }
       side={
         <>
@@ -295,7 +298,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
   },
-  board: { borderWidth: 1.5, borderColor: colors.text },
+  board: { borderWidth: 1.5, borderColor: colors.text, borderRadius: 20, overflow: 'hidden' },
   block: { backgroundColor: '#343A40', borderWidth: 0.5, borderColor: '#212529' },
   clueCell: { backgroundColor: '#FFF3BF', borderWidth: 0.5, borderColor: '#BFA13A' },
   clueHalf: { flex: 1, paddingHorizontal: 2, paddingTop: 1, justifyContent: 'space-between' },

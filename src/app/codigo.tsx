@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { feedback, generate, type Level, LEVELS, PEG_COLORS, TRIES } from '@/games/codigo';
 import { withSeed } from '@/games/random';
@@ -24,6 +25,7 @@ export default function CodigoScreen() {
       : withSeed(levelSeed('codigo', 'medio', 1), () => generate('medio')),
   );
   const [guesses, setGuesses] = useState<number[][]>([]);
+  const [shown, setShown] = useState<number[]>([]); // positions revealed by hints
   const [current, setCurrent] = useState<(number | null)[]>(() => Array(secret.length).fill(null));
   const [finished, setFinished] = useState(false);
   const { length, colors: colorCount } = LEVELS[level];
@@ -36,12 +38,13 @@ export default function CodigoScreen() {
   const [seconds, setSeconds] = useTimer(!over);
   const stats = useStats(`codigo:${level}`, finished);
 
-  const loaded = useAutosave(saveKey, { date, stage, level, secret, guesses, seconds, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, secret, guesses, shown, seconds, finished }, (s) => {
     if (daily && s.date !== date) return;
     setStage(s.stage ?? 1);
     setLevel(s.level);
     setSecret(s.secret);
     setGuesses(s.guesses);
+    setShown(s.shown ?? []);
     setCurrent(Array(s.secret.length).fill(null));
     setSeconds(s.seconds);
     setFinished(s.finished);
@@ -64,6 +67,7 @@ export default function CodigoScreen() {
     setCurrent(Array(code.length).fill(null));
     setSeconds(0);
     setFinished(false);
+    setShown([]);
   }
 
   function addColor(c: number) {
@@ -78,6 +82,14 @@ export default function CodigoScreen() {
     if (over || current.includes(null)) return;
     setGuesses((g) => [...g, current as number[]]);
     setCurrent(Array(secret.length).fill(null));
+  }
+
+  // Hint: shows the colour of one position of the secret code.
+  function hint() {
+    const k = secret.findIndex((_, i) => !shown.includes(i));
+    if (over || k === -1) return false;
+    setShown((s) => [...s, k]);
+    return true;
   }
 
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
@@ -132,55 +144,72 @@ export default function CodigoScreen() {
         </>
       }
       board={
-        <View style={[styles.board, { width: size }]}>
-          {Array.from({ length: TRIES }, (_, r) => {
-            const guess = guesses[r];
-            const isCurrent = r === guesses.length && !over;
-            const row = guess ?? (isCurrent ? current : Array(length).fill(null));
-            return (
-              <View key={r} style={[styles.boardRow, isCurrent && styles.currentRow]}>
-                {row.map((c, k) => (
-                  <Pressable
+        <BoardFrame>
+          <View style={[styles.board, { width: size }]}>
+            {Array.from({ length: TRIES }, (_, r) => {
+              const guess = guesses[r];
+              const isCurrent = r === guesses.length && !over;
+              const row = guess ?? (isCurrent ? current : Array(length).fill(null));
+              return (
+                <View key={r} style={[styles.boardRow, isCurrent && styles.currentRow]}>
+                  {row.map((c, k) => (
+                    <Pressable
+                      key={k}
+                      disabled={!isCurrent || c === null}
+                      onPress={() => setCurrent((cur) => cur.map((v, i) => (i === k ? null : v)))}
+                      style={[
+                        styles.peg,
+                        { width: peg, height: peg, borderRadius: peg / 2 },
+                        c !== null && { backgroundColor: PEG_COLORS[c], borderColor: PEG_COLORS[c] },
+                      ]}
+                    />
+                  ))}
+                  {guess ? <Pegs guess={guess} /> : <View style={{ width: peg * 1.1 }} />}
+                </View>
+              );
+            })}
+            {over && (
+              <View style={[styles.boardRow, styles.secretRow]}>
+                {secret.map((c, k) => (
+                  <View
                     key={k}
-                    disabled={!isCurrent || c === null}
-                    onPress={() => setCurrent((cur) => cur.map((v, i) => (i === k ? null : v)))}
                     style={[
                       styles.peg,
-                      { width: peg, height: peg, borderRadius: peg / 2 },
-                      c !== null && { backgroundColor: PEG_COLORS[c], borderColor: PEG_COLORS[c] },
+                      {
+                        width: peg,
+                        height: peg,
+                        borderRadius: peg / 2,
+                        backgroundColor: PEG_COLORS[c],
+                        borderColor: '#fff',
+                      },
                     ]}
                   />
                 ))}
-                {guess ? <Pegs guess={guess} /> : <View style={{ width: peg * 1.1 }} />}
+                <Text style={styles.secretLabel}>código</Text>
               </View>
-            );
-          })}
-          {over && (
-            <View style={[styles.boardRow, styles.secretRow]}>
-              {secret.map((c, k) => (
-                <View
-                  key={k}
-                  style={[
-                    styles.peg,
-                    {
-                      width: peg,
-                      height: peg,
-                      borderRadius: peg / 2,
-                      backgroundColor: PEG_COLORS[c],
-                      borderColor: '#fff',
-                    },
-                  ]}
-                />
-              ))}
-              <Text style={styles.secretLabel}>código</Text>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
           {won && <Banner text={`¡Código descifrado en ${guesses.length} intentos!`} />}
           {lost && <Banner tone="danger" text="Se acabaron los intentos" />}
+          {!daily && !over && shown.length > 0 && (
+            <View style={styles.hintRow}>
+              <Text style={styles.hintLabel}>Pista</Text>
+              {secret.map((c, k) => (
+                <View
+                  key={k}
+                  style={[
+                    styles.hintPeg,
+                    shown.includes(k) && { backgroundColor: PEG_COLORS[c], borderColor: PEG_COLORS[c] },
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+          {!daily && !over && <HintButton onHint={hint} />}
           {over ? (
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/codigo')} />
@@ -232,6 +261,16 @@ export default function CodigoScreen() {
 }
 
 const styles = StyleSheet.create({
+  hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  hintLabel: { fontSize: 14, fontWeight: '700', color: colors.muted },
+  hintPeg: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: '#DEE2E6',
+    backgroundColor: '#F8F9FA',
+  },
   row: { flexDirection: 'row', gap: 6, maxWidth: 460, width: '100%' },
   help: { fontSize: 14, color: colors.muted, textAlign: 'center', maxWidth: 460 },
   timer: {

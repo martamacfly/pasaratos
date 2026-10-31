@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader } from '@/components/ui';
+import { Banner, Button, DailyHeader, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { groupOf, PUZZLES } from '@/games/grupos';
@@ -90,6 +90,15 @@ export default function GruposScreen() {
     setMessage(most === 3 ? '¡Casi! Te falta una' : 'No es un grupo');
   }
 
+  // Hint: solves one of the groups still hidden, without using up a mistake.
+  function hint() {
+    const g = [0, 1, 2, 3].find((k) => !found.includes(k));
+    if (over || g === undefined) return false;
+    setFound((f) => [...f, g]);
+    setSelected((s) => s.filter((w) => groupOf(puzzle, w) !== g));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, PUZZLES.length);
 
   if (!loaded) return null;
@@ -165,6 +174,7 @@ export default function GruposScreen() {
           <View style={{ width: panel, gap: 10 }}>
             {won && <Banner text="¡Todos los grupos encontrados!" />}
             {lost && <Banner tone="danger" text="Se acabaron los fallos. Estas eran las soluciones." />}
+            {!daily && !over && <HintButton onHint={hint} />}
             {over ? (
               daily ? (
                 <Button label="Jugar partida libre" onPress={() => router.replace('/grupos')} />

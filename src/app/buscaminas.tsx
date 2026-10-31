@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
 import { FlagGlyph, Glyph, MineGlyph } from '@/components/icons';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
@@ -115,6 +116,16 @@ export default function BuscaminasScreen() {
     });
   }
 
+  // Hint: opens a safe cell, preferably one next to the area already open.
+  function hint() {
+    if (over || !mines) return false;
+    const safe = revealed.map((_, i) => i).filter((i) => !revealed[i] && !mines[i] && !flags[i]);
+    const i = safe.find((c) => neighbors(c, size).some((j) => revealed[j])) ?? safe[0];
+    if (i === undefined) return false;
+    setState((s) => open(s, [i]));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -148,42 +159,45 @@ export default function BuscaminasScreen() {
         </>
       }
       board={
-        <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
-          {revealed.map((open, i) => {
-            const isMine = mines?.[i];
-            const showMine = isMine && (open || lost);
-            const n = mines && open && !isMine ? countAround(mines, i, size) : 0;
-            return (
-              <Pressable
-                key={i}
-                onPress={() => tap(i)}
-                style={[
-                  styles.cell,
-                  { width: cell, height: cell },
-                  open ? styles.open : styles.closed,
-                  open && isMine && { backgroundColor: colors.danger },
-                ]}
-              >
-                {showMine ? (
-                  <Glyph size={cell * 0.7}>
-                    <MineGlyph ink="#212529" />
-                  </Glyph>
-                ) : flags[i] ? (
-                  <Glyph size={cell * 0.7}>
-                    <FlagGlyph ink={colors.danger} />
-                  </Glyph>
-                ) : (
-                  <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>{n || ''}</Text>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+        <BoardFrame>
+          <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
+            {revealed.map((open, i) => {
+              const isMine = mines?.[i];
+              const showMine = isMine && (open || lost);
+              const n = mines && open && !isMine ? countAround(mines, i, size) : 0;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => tap(i)}
+                  style={[
+                    styles.cell,
+                    { width: cell, height: cell },
+                    open ? styles.open : styles.closed,
+                    open && isMine && { backgroundColor: colors.danger },
+                  ]}
+                >
+                  {showMine ? (
+                    <Glyph size={cell * 0.7}>
+                      <MineGlyph ink="#212529" />
+                    </Glyph>
+                  ) : flags[i] ? (
+                    <Glyph size={cell * 0.7}>
+                      <FlagGlyph ink={colors.danger} />
+                    </Glyph>
+                  ) : (
+                    <Text style={{ fontSize: cell * 0.55, fontWeight: '800', color: NUMBER_COLORS[n] }}>{n || ''}</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
           {won && <Banner text={`¡Campo despejado en ${formatTime(seconds)}!`} />}
           {lost && <Banner tone="danger" text="¡Boom! Has pisado una mina" />}
+          {!daily && !over && <HintButton onHint={hint} />}
           {over ? (
             daily ? (
               <Button label="Jugar partida libre" onPress={() => router.replace('/buscaminas')} />

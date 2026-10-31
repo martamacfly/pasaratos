@@ -1,10 +1,12 @@
 import {
-  Fredoka_400Regular,
-  Fredoka_500Medium,
-  Fredoka_600SemiBold,
-  Fredoka_700Bold,
+  Nunito_400Regular,
+  Nunito_500Medium,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  Nunito_900Black,
   useFonts,
-} from '@expo-google-fonts/fredoka';
+} from '@expo-google-fonts/nunito';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { FONTS } from '@/components/AppText';
@@ -12,9 +14,16 @@ import { HomeButton } from '@/components/HomeButton';
 import { themeFor } from '@/gameTheme';
 
 export default function RootLayout() {
-  // Not waited for: until Fredoka arrives the text shows in the system font, so the pre-rendered
+  // Not waited for: until Nunito arrives the text shows in the system font, so the pre-rendered
   // web pages and the first frame on a phone are never blank.
-  useFonts({ Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold });
+  useFonts({
+    Nunito_400Regular,
+    Nunito_500Medium,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+  });
   return (
     <>
       <StatusBar style="light" />
@@ -26,7 +35,7 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: theme.main },
             headerShadowVisible: false,
             headerTintColor: '#fff',
-            headerTitleStyle: { fontFamily: FONTS.bold, fontSize: 21 },
+            headerTitleStyle: { fontFamily: FONTS.black, fontSize: 25 },
             contentStyle: { backgroundColor: theme.bg },
             // Always shown, so a game opened from a link or after a reload can still get back to the menu.
             headerLeft: () => <HomeButton />,

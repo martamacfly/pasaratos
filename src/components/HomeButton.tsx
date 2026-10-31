@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 12,
   },
-  chevron: { color: '#fff', fontSize: 24, fontWeight: '800', lineHeight: 26, marginTop: -2 },
-  label: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  chevron: { color: '#fff', fontSize: 26, fontWeight: '800', lineHeight: 28, marginTop: -2 },
+  label: { color: '#fff', fontSize: 17, fontWeight: '800' },
 });

@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
 import { Glyph, MoonGlyph, SunGlyph } from '@/components/icons';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
@@ -78,6 +79,14 @@ export default function BinarioScreen() {
     setBoard((prev) => prev.map((v, j) => (j === i ? (v + 1) % 3 : v)));
   }
 
+  // Hint: puts the right symbol in the first cell that is empty or wrong.
+  function hint() {
+    const i = board.findIndex((v, k) => v !== game.solution[k]);
+    if (i === -1) return false;
+    setBoard((prev) => prev.map((v, k) => (k === i ? game.solution[i] : v)));
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -113,24 +122,26 @@ export default function BinarioScreen() {
         </>
       }
       board={
-        <View style={[styles.grid, { width: size, height: size }]}>
-          {board.map((v, i) => (
-            <Pressable
-              key={i}
-              onPress={() => tap(i)}
-              style={[
-                styles.cell,
-                { width: cell, height: cell },
-                game.puzzle[i] !== 0 && { backgroundColor: '#ECEAE4' },
-                bad.has(i) && { backgroundColor: colors.dangerSoft },
-              ]}
-            >
-              {v !== 0 && (
-                <Glyph size={cell * 0.62}>{v === 1 ? <SunGlyph ink="#F08C00" /> : <MoonGlyph ink="#5F3DC4" />}</Glyph>
-              )}
-            </Pressable>
-          ))}
-        </View>
+        <BoardFrame>
+          <View style={[styles.grid, { width: size, height: size }]}>
+            {board.map((v, i) => (
+              <Pressable
+                key={i}
+                onPress={() => tap(i)}
+                style={[
+                  styles.cell,
+                  { width: cell, height: cell },
+                  game.puzzle[i] !== 0 && { backgroundColor: '#ECEAE4' },
+                  bad.has(i) && { backgroundColor: colors.dangerSoft },
+                ]}
+              >
+                {v !== 0 && (
+                  <Glyph size={cell * 0.62}>{v === 1 ? <SunGlyph ink="#F08C00" /> : <MoonGlyph ink="#5F3DC4" />}</Glyph>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
@@ -142,15 +153,18 @@ export default function BinarioScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(level, nextStage)} />
             )
           ) : (
-            <View style={styles.row}>
-              <Button
-                label="Deshacer"
-                variant="secondary"
-                onPress={undo}
-                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
-              />
-              <Button label="Vaciar" variant="secondary" onPress={() => setBoard(game.puzzle)} style={{ flex: 1 }} />
-            </View>
+            <>
+              <View style={styles.row}>
+                <Button
+                  label="Deshacer"
+                  variant="secondary"
+                  onPress={undo}
+                  style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+                />
+                <Button label="Vaciar" variant="secondary" onPress={() => setBoard(game.puzzle)} style={{ flex: 1 }} />
+              </View>
+              {!daily && <HintButton onHint={hint} />}
+            </>
           )}
         </View>
       }

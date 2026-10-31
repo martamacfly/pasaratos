@@ -300,6 +300,7 @@ const styles = StyleSheet.create({
   cell: {
     borderWidth: 0.5,
     borderColor: colors.text,
+    borderRadius: 4,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',

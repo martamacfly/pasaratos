@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { gameName, SITE_URL } from '@/games/catalog';
+import { addHint } from '@/hints';
 
 /** `detail` is an optional extra line for sharing, e.g. the coloured squares of a word game. */
 export type DailyResult = { won: boolean; seconds?: number; detail?: string };
@@ -34,8 +35,11 @@ export async function loadDaily(): Promise<DailyLog> {
 export async function recordDaily(game: string, won: boolean, seconds?: number, detail?: string) {
   const log = await loadDaily();
   const today = dateKey();
+  // Winning a game's challenge earns a hint, once per game and day.
+  const earnsHint = won && !log[today]?.[game]?.won;
   log[today] = { ...log[today], [game]: { won, seconds, detail } };
   await AsyncStorage.setItem(KEY, JSON.stringify(log));
+  if (earnsHint) await addHint();
   listeners.forEach((notify) => notify());
 }
 

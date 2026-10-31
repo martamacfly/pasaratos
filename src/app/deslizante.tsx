@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
 import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
@@ -100,28 +101,30 @@ export default function DeslizanteScreen() {
         </>
       }
       board={
-        <View style={[styles.board, { width: size, height: size }]}>
-          {board.map((v, i) =>
-            v === 0 ? (
-              <View key="gap" style={{ width: cell, height: cell }} />
-            ) : (
-              <View key={v} style={{ width: cell, height: cell, padding: 3 }}>
-                <Pressable
-                  onPress={() => tap(i)}
-                  style={({ pressed }) => [
-                    styles.tile,
-                    { backgroundColor: v === i + 1 ? theme.main : theme.soft },
-                    pressed && { transform: [{ scale: 0.95 }] },
-                  ]}
-                >
-                  <Text style={[styles.number, { fontSize: cell * 0.4, color: v === i + 1 ? '#fff' : theme.main }]}>
-                    {v}
-                  </Text>
-                </Pressable>
-              </View>
-            ),
-          )}
-        </View>
+        <BoardFrame>
+          <View style={[styles.board, { width: size, height: size }]}>
+            {board.map((v, i) =>
+              v === 0 ? (
+                <View key="gap" style={{ width: cell, height: cell }} />
+              ) : (
+                <View key={v} style={{ width: cell, height: cell, padding: 3 }}>
+                  <Pressable
+                    onPress={() => tap(i)}
+                    style={({ pressed }) => [
+                      styles.tile,
+                      { backgroundColor: v === i + 1 ? theme.main : theme.soft },
+                      pressed && { transform: [{ scale: 0.95 }] },
+                    ]}
+                  >
+                    <Text style={[styles.number, { fontSize: cell * 0.4, color: v === i + 1 ? '#fff' : theme.main }]}>
+                      {v}
+                    </Text>
+                  </Pressable>
+                </View>
+              ),
+            )}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>

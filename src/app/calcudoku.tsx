@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime, NumberPad } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton, NumberPad } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { cageConflicts, generate } from '@/games/calcudoku';
@@ -74,6 +75,16 @@ export default function CalcudokuScreen() {
     setBoard((prev) => prev.map((x, i) => (i === selected ? v : x)));
   }
 
+  // Hint: puts the right value in the selected cell if it needs one, otherwise in the first that does.
+  function hint() {
+    const needs = (i: number) => true && board[i] !== solution[i];
+    const i = selected !== null && needs(selected) ? selected : board.findIndex((_, k) => needs(k));
+    if (i === -1) return false;
+    setBoard((prev) => prev.map((v, k) => (k === i ? solution[i] : v)));
+    setSelected(i);
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -134,32 +145,34 @@ export default function CalcudokuScreen() {
         </>
       }
       board={
-        <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
-          {board.map((v, i) => {
-            const r = Math.floor(i / n);
-            const c = i % n;
-            return (
-              <Pressable
-                key={i}
-                onPress={() => setSelected(i)}
-                style={[
-                  styles.cell,
-                  { width: cell, height: cell, ...borders(i, r, c) },
-                  i === selected && { backgroundColor: theme.main + '40' },
-                ]}
-              >
-                {labelAt.has(i) && (
-                  <Text style={[styles.label, { fontSize: Math.min(cell * 0.2, 15) }]}>{labelAt.get(i)}</Text>
-                )}
-                <Text
-                  style={{ fontSize: cell * 0.45, fontWeight: '600', color: bad.has(i) ? colors.danger : theme.main }}
+        <BoardFrame>
+          <View style={{ width: boardSize, height: boardSize, flexDirection: 'row', flexWrap: 'wrap' }}>
+            {board.map((v, i) => {
+              const r = Math.floor(i / n);
+              const c = i % n;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setSelected(i)}
+                  style={[
+                    styles.cell,
+                    { width: cell, height: cell, ...borders(i, r, c) },
+                    i === selected && { backgroundColor: theme.main + '40' },
+                  ]}
                 >
-                  {v || ''}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  {labelAt.has(i) && (
+                    <Text style={[styles.label, { fontSize: Math.min(cell * 0.2, 15) }]}>{labelAt.get(i)}</Text>
+                  )}
+                  <Text
+                    style={{ fontSize: cell * 0.45, fontWeight: '600', color: bad.has(i) ? colors.danger : theme.main }}
+                  >
+                    {v || ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
@@ -174,6 +187,7 @@ export default function CalcudokuScreen() {
             <>
               <NumberPad max={n} onPress={input} width={panel} />
               <Button label="Deshacer" variant="secondary" onPress={undo} style={{ opacity: canUndo ? 1 : 0.5 }} />
+              {!daily && <HintButton onHint={hint} />}
             </>
           )}
         </View>

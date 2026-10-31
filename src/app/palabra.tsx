@@ -5,7 +5,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { router } from 'expo-router';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader } from '@/components/ui';
+import { Banner, Button, DailyHeader, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { keyMarks, type Mark, score } from '@/games/palabra';
 import { pick, withSeed } from '@/games/random';
@@ -44,6 +44,7 @@ export default function PalabraScreen() {
   );
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState('');
+  const [shown, setShown] = useState<number[]>([]); // positions revealed by hints
   const [message, setMessage] = useState('');
   const tries = LEVELS[level].tries;
 
@@ -53,12 +54,13 @@ export default function PalabraScreen() {
   const [finished, setFinished] = useState(false);
   const stats = useStats('palabra', finished);
 
-  const loaded = useAutosave(saveKey, { date, stage, level, answer, guesses, finished }, (s) => {
+  const loaded = useAutosave(saveKey, { date, stage, level, answer, guesses, shown, finished }, (s) => {
     if (daily && s.date !== date) return;
     setStage(s.stage ?? 1);
     setLevel(s.level ?? 'normal');
     setAnswer(s.answer);
     setGuesses(s.guesses);
+    setShown(s.shown ?? []);
     setFinished(s.finished);
   });
 
@@ -104,6 +106,7 @@ export default function PalabraScreen() {
     setCurrent('');
     setMessage('');
     setFinished(false);
+    setShown([]);
   }
 
   // Physical keyboard support when running on web.
@@ -124,6 +127,15 @@ export default function PalabraScreen() {
     if (r === guesses.length && !over) return { word: current, marks: null };
     return { word: '', marks: null };
   });
+
+  // Hint: tells one letter of the answer, in a position the player hasn't got right yet.
+  function hint() {
+    const known = new Set(guesses.flatMap((g) => [...g].map((l, i) => (l === answer[i] ? i : -1))));
+    const i = [...answer].findIndex((_, k) => !known.has(k) && !shown.includes(k));
+    if (i === -1) return false;
+    setShown((s) => [...s, i]);
+    return true;
+  }
 
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
@@ -193,6 +205,16 @@ export default function PalabraScreen() {
             ) : null}
           </View>
 
+          {!daily && !over && shown.length > 0 && (
+            <Text style={styles.hintText}>
+              Pista:{' '}
+              {[...shown]
+                .sort((a, b) => a - b)
+                .map((i) => `${i + 1}.ª letra ${answer[i]}`)
+                .join(' · ')}
+            </Text>
+          )}
+          {!daily && !over && <HintButton onHint={hint} style={{ width: wide ? panel : boardWidth }} />}
           {over ? (
             <Button
               label={daily ? 'Jugar partida libre' : won ? 'Siguiente nivel' : 'Reintentar nivel'}
@@ -234,13 +256,16 @@ export default function PalabraScreen() {
 }
 
 const styles = StyleSheet.create({
+  hintText: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
   tile: {
     borderWidth: 2,
     borderColor: colors.border,
+    borderBottomWidth: 5,
+    borderBottomColor: 'rgba(0,0,0,0.14)',
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 12,
   },
   tileText: { fontWeight: '800', color: colors.text },
   stats: { fontSize: 15, color: colors.muted },

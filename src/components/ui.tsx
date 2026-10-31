@@ -5,6 +5,7 @@ import { Text } from '@/components/AppText';
 import { CelebrateContext } from '@/components/GameLayout';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
+import { spendHint, useHints } from '@/hints';
 import { share } from '@/share';
 import { colors } from '@/theme';
 
@@ -73,6 +74,25 @@ export function NumberPad({ max, onPress, width }: { max: number; onPress: (n: n
       </Pressable>
     </View>
   );
+}
+
+/**
+ * Uses one of the hints earned in the daily challenges. `onHint` applies it to the game and
+ * returns false when there was nothing left to give away, so no hint is spent.
+ */
+export function HintButton({ onHint, style }: { onHint: () => boolean; style?: ViewStyle }) {
+  const count = useHints();
+  const [feedback, setFeedback] = useState<string | null>(null);
+  function say(text: string) {
+    setFeedback(text);
+    setTimeout(() => setFeedback(null), 2500);
+  }
+  async function onPress() {
+    if (count <= 0) return say('Gana retos del día para conseguir pistas');
+    if (!onHint()) return say('No hace falta ninguna pista');
+    await spendHint();
+  }
+  return <Button label={feedback ?? `Pista · ${count}`} variant="secondary" onPress={onPress} style={style} />;
 }
 
 /** Shares `text` and briefly says on the button whether it was shared or copied. */

@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/AppText';
 import { router } from 'expo-router';
 import { CrownGlyph, Glyph } from '@/components/icons';
+import { BoardFrame } from '@/components/BoardFrame';
 import { GameLayout, useGameSizes } from '@/components/GameLayout';
 import { LevelBar } from '@/components/LevelBar';
-import { Banner, Button, DailyHeader, formatTime } from '@/components/ui';
+import { Banner, Button, DailyHeader, formatTime, HintButton } from '@/components/ui';
 import { recordDaily, useDaily } from '@/daily';
 import { withSeed } from '@/games/random';
 import { useTimer } from '@/hooks/useTimer';
@@ -74,6 +75,18 @@ export default function ReinasScreen() {
     setFinished(false);
   }
 
+  // Hint: places the queen of the first row that doesn't have its right one yet.
+  function hint() {
+    const r = puzzle.solution.findIndex((c, row) => board[row][c] !== 2);
+    if (r === -1) return false;
+    const c = puzzle.solution[r];
+    // Any other queen in that row is wrong, so it becomes a cross.
+    setBoard((prev) =>
+      prev.map((row, i) => (i !== r ? row : (row.map((s, j) => (j === c ? 2 : s === 2 ? 1 : s)) as CellState[]))),
+    );
+    return true;
+  }
+
   const nextStage = Math.min(stage + 1, LEVEL_COUNT);
 
   if (!loaded) return null;
@@ -120,35 +133,37 @@ export default function ReinasScreen() {
         </>
       }
       board={
-        <View style={{ width: size, height: size, flexDirection: 'row', flexWrap: 'wrap' }}>
-          {board.map((row, r) =>
-            row.map((s, c) => (
-              <Pressable
-                key={`${r},${c}`}
-                onPress={() => tap(r, c)}
-                style={[
-                  styles.cell,
-                  {
-                    width: cell,
-                    height: cell,
-                    backgroundColor: s === 2 && bad.has(`${r},${c}`) ? colors.danger : REGION_COLORS[regions[r][c]],
-                    borderTopWidth: edge(r, c, r - 1, c),
-                    borderBottomWidth: edge(r, c, r + 1, c),
-                    borderLeftWidth: edge(r, c, r, c - 1),
-                    borderRightWidth: edge(r, c, r, c + 1),
-                  },
-                ]}
-              >
-                {s === 1 && <Text style={{ fontSize: cell * 0.35, color: '#495057' }}>✕</Text>}
-                {s === 2 && (
-                  <Glyph size={cell * 0.62}>
-                    <CrownGlyph ink={bad.has(`${r},${c}`) ? '#fff' : '#212529'} />
-                  </Glyph>
-                )}
-              </Pressable>
-            )),
-          )}
-        </View>
+        <BoardFrame>
+          <View style={{ width: size, height: size, flexDirection: 'row', flexWrap: 'wrap' }}>
+            {board.map((row, r) =>
+              row.map((s, c) => (
+                <Pressable
+                  key={`${r},${c}`}
+                  onPress={() => tap(r, c)}
+                  style={[
+                    styles.cell,
+                    {
+                      width: cell,
+                      height: cell,
+                      backgroundColor: s === 2 && bad.has(`${r},${c}`) ? colors.danger : REGION_COLORS[regions[r][c]],
+                      borderTopWidth: edge(r, c, r - 1, c),
+                      borderBottomWidth: edge(r, c, r + 1, c),
+                      borderLeftWidth: edge(r, c, r, c - 1),
+                      borderRightWidth: edge(r, c, r, c + 1),
+                    },
+                  ]}
+                >
+                  {s === 1 && <Text style={{ fontSize: cell * 0.35, color: '#495057' }}>✕</Text>}
+                  {s === 2 && (
+                    <Glyph size={cell * 0.62}>
+                      <CrownGlyph ink={bad.has(`${r},${c}`) ? '#fff' : '#212529'} />
+                    </Glyph>
+                  )}
+                </Pressable>
+              )),
+            )}
+          </View>
+        </BoardFrame>
       }
       side={
         <View style={{ width: panel, gap: 10 }}>
@@ -160,15 +175,23 @@ export default function ReinasScreen() {
               <Button label="Siguiente nivel" onPress={() => newGame(n, nextStage)} />
             )
           ) : (
-            <View style={styles.row}>
-              <Button
-                label="Deshacer"
-                variant="secondary"
-                onPress={undo}
-                style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
-              />
-              <Button label="Vaciar" variant="secondary" onPress={() => setBoard(emptyBoard(n))} style={{ flex: 1 }} />
-            </View>
+            <>
+              <View style={styles.row}>
+                <Button
+                  label="Deshacer"
+                  variant="secondary"
+                  onPress={undo}
+                  style={{ flex: 1, opacity: canUndo ? 1 : 0.5 }}
+                />
+                <Button
+                  label="Vaciar"
+                  variant="secondary"
+                  onPress={() => setBoard(emptyBoard(n))}
+                  style={{ flex: 1 }}
+                />
+              </View>
+              {!daily && <HintButton onHint={hint} />}
+            </>
           )}
         </View>
       }

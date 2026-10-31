@@ -10,6 +10,7 @@ import { loadAchievements } from '@/achievements';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
+import { useHints } from '@/hints';
 import { loadStats, type Stats } from '@/storage';
 import { colors, radius } from '@/theme';
 
@@ -27,6 +28,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [daily, setDaily] = useState<DailyLog>({});
+  const hints = useHints();
   const [medals, setMedals] = useState({ unlocked: 0, total: 0 });
 
   useFocusEffect(
@@ -128,6 +130,7 @@ export default function Home() {
               );
             })}
           </View>
+          <Text style={styles.hintText}>Cada reto ganado te da una pista para la partida libre · Tienes {hints}</Text>
           {doneToday > 0 && <ShareButton text={shareText(daily)} label="Compartir mi día" />}
         </View>
 
@@ -181,8 +184,8 @@ const styles = StyleSheet.create({
   },
   medalsText: { color: '#fff', fontWeight: '900', fontSize: 15 },
   logo: { width: 60, height: 60, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
-  title: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
-  tagline: { fontSize: 15, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  title: { fontSize: 38, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
+  tagline: { fontSize: 17, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
   dailyCard: {
     backgroundColor: colors.card,
     borderRadius: radius * 1.5,
@@ -210,6 +213,7 @@ const styles = StyleSheet.create({
   streakLabel: { fontSize: 11, lineHeight: 13, fontWeight: '700', color: '#E8590C' },
   progressTrack: { height: 8, borderRadius: 4, backgroundColor: '#EDF2FF', overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 4, backgroundColor: colors.accent },
+  hintText: { fontSize: 13, color: '#E67700', fontWeight: '600' },
   progressText: { fontSize: 13, color: colors.muted },
   dailyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   badge: {
