@@ -3,12 +3,12 @@ import { type ReactNode, useContext, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, type TextStyle, View, type ViewStyle } from 'react-native';
 import { Text } from '@/components/AppText';
 import { CelebrateContext, LevelInfoContext } from '@/components/GameLayout';
+import { ShareSheet } from '@/components/ShareSheet';
 import { dateKey, dateLabel, shareText, useDailyLog } from '@/daily';
 import { useGameTheme } from '@/gameTheme';
 import { buzz, tap } from '@/haptics';
 import { spendHint, useHints } from '@/hints';
 import { useSettings } from '@/settings';
-import { share } from '@/share';
 import { levelShareText } from '@/social';
 import { colors, tone } from '@/theme';
 
@@ -119,7 +119,7 @@ export function HintButton({ onHint, style }: { onHint: () => boolean; style?: V
   return <Button label={feedback ?? `Pista · ${count}`} variant="secondary" onPress={onPress} style={style} />;
 }
 
-/** Shares `text` and briefly says on the button whether it was shared or copied. */
+/** Opens the share menu (social networks, copy, system share sheet) for `text`. */
 export function ShareButton({
   text,
   label = 'Compartir resultado',
@@ -129,19 +129,13 @@ export function ShareButton({
   label?: string;
   style?: ViewStyle;
 }) {
-  const [feedback, setFeedback] = useState<string | null>(null);
-  async function onPress() {
-    const result = await share(text);
-    setFeedback(
-      result === 'copied'
-        ? '¡Copiado! Pégalo donde quieras'
-        : result === 'shared'
-          ? '¡Compartido!'
-          : 'No se pudo compartir',
-    );
-    setTimeout(() => setFeedback(null), 2500);
-  }
-  return <Button label={feedback ?? label} onPress={onPress} style={style} />;
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button label={label} onPress={() => setOpen(true)} style={style} />
+      {open && <ShareSheet text={text} onClose={() => setOpen(false)} />}
+    </>
+  );
 }
 
 /**

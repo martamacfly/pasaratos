@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ChartGlyph, CheckGlyph, CrossGlyph, GameIcon, GearGlyph, Glyph, MedalGlyph } from '@/components/icons';
 import { initSeenAchievements, loadAchievements } from '@/achievements';
+import { FavoriteStar } from '@/components/FavoriteStar';
+import { useFavorites } from '@/favorites';
 import { ShareButton } from '@/components/ui';
 import { type DailyLog, dateKey, dateLabel, loadDaily, shareText, streak } from '@/daily';
 import { ALL_GAMES, CAN_LOSE, SECTIONS } from '@/games/catalog';
@@ -29,6 +31,14 @@ export default function Home() {
   const [stats, setStats] = useState<Record<string, Stats>>({});
   const [daily, setDaily] = useState<DailyLog>({});
   const [medals, setMedals] = useState({ unlocked: 0, total: 0 });
+  const favorites = useFavorites();
+  // Starred games come first in a section of their own (and stay in their usual one too).
+  const sections = favorites.length
+    ? [
+        { title: 'Favoritos', games: favorites.map((id) => ALL_GAMES.find((g) => g.id === id)!).filter(Boolean) },
+        ...SECTIONS,
+      ]
+    : SECTIONS;
 
   useFocusEffect(
     useCallback(() => {
@@ -158,7 +168,7 @@ export default function Home() {
           {doneToday > 0 && <ShareButton text={shareText(daily)} label="Compartir mi día" />}
         </View>
 
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <View key={section.title} style={{ marginTop: 28 }}>
             <Text style={styles.section}>{section.title}</Text>
             <View style={styles.cards}>
@@ -171,7 +181,10 @@ export default function Home() {
                     onPress={() => router.push(g.href as '/sudoku')}
                     style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && styles.cardPressed]}
                   >
-                    <GameIcon id={g.id} size={52} />
+                    <View style={styles.cardTop}>
+                      <GameIcon id={g.id} size={52} />
+                      <FavoriteStar game={g.id} color={tone('#F59F00')} />
+                    </View>
                     <Text style={styles.name}>{g.name}</Text>
                     <Text style={styles.desc} numberOfLines={3}>
                       {g.desc}
@@ -196,6 +209,7 @@ const styles = StyleSheet.create({
   hero: { paddingBottom: 80, alignItems: 'center', overflow: 'hidden' },
   inner: { alignSelf: 'center' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroButtons: { marginLeft: 'auto', flexDirection: 'row', gap: 8 },
   gear: { paddingHorizontal: 8 },
   medals: {

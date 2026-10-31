@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
 /** Levels per difficulty (or per size) of every game. */
-export const LEVEL_COUNT = 20;
+export const LEVEL_COUNT = 50;
 
 const KEY = 'levels';
 /** "game:variant" -> numbers of the completed levels */

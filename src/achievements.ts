@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { type DailyLog, loadDaily } from './daily';
 import { ALL_GAMES } from './games/catalog';
-import { load as loadLevels, type Progress } from './levels';
+import { LEVEL_COUNT, load as loadLevels, type Progress } from './levels';
 import { loadStats, type Stats } from './storage';
 
 export type Tier = 'bronce' | 'plata' | 'oro';
@@ -135,9 +135,17 @@ const DEFINITIONS: Definition[] = [
   {
     id: 'cumbre',
     title: 'Cumbre',
-    desc: 'Completa los 20 niveles de una dificultad',
+    desc: 'Completa 20 niveles de una misma dificultad',
     tier: 'plata',
     goal: 20,
+    progress: (d) => Math.max(0, ...Object.values(d.levels).map((l) => l.length)),
+  },
+  {
+    id: 'cima',
+    title: 'Cima',
+    desc: `Completa los ${LEVEL_COUNT} niveles de una dificultad`,
+    tier: 'oro',
+    goal: LEVEL_COUNT,
     progress: (d) => Math.max(0, ...Object.values(d.levels).map((l) => l.length)),
   },
   {

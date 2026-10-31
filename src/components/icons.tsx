@@ -126,6 +126,19 @@ export function CrossGlyph({ ink }: GlyphProps) {
   return <Path d="M26 26 L74 74 M74 26 L26 74" fill="none" stroke={ink} strokeWidth={14} strokeLinecap="round" />;
 }
 
+/** Five-pointed star, filled or just outlined. */
+export function StarGlyph({ ink, filled }: GlyphProps & { filled: boolean }) {
+  return (
+    <Path
+      d="M50 8 L62 36 L92 38 L69 58 L76 88 L50 72 L24 88 L31 58 L8 38 L38 36 Z"
+      fill={filled ? ink : 'none'}
+      stroke={ink}
+      strokeWidth={7}
+      strokeLinejoin="round"
+    />
+  );
+}
+
 export function ChartGlyph({ ink }: GlyphProps) {
   return (
     <G>

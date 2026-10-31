@@ -4,8 +4,8 @@ import { Text } from '@/components/AppText';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { type Achievement, loadAchievements, type Tier } from '@/achievements';
 import { Glyph, MedalGlyph } from '@/components/icons';
+import { ShareSheet } from '@/components/ShareSheet';
 import { ShareButton } from '@/components/ui';
-import { share } from '@/share';
 import { achievementShareText, achievementsSummaryText } from '@/social';
 import { colors, radius, tone } from '@/theme';
 
@@ -75,23 +75,21 @@ export default function LogrosScreen() {
   );
 }
 
-/** Small "Compartir" link that briefly says whether the text was shared or copied. */
+/** Small "Compartir" link that opens the share menu. */
 function ShareLink({ text }: { text: string }) {
-  const [feedback, setFeedback] = useState<string | null>(null);
-  async function onPress() {
-    const result = await share(text);
-    setFeedback(result === 'copied' ? '¡Copiado!' : result === 'shared' ? '¡Compartido!' : 'No se pudo');
-    setTimeout(() => setFeedback(null), 2000);
-  }
+  const [open, setOpen] = useState(false);
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      hitSlop={8}
-      style={({ pressed }) => pressed && { opacity: 0.6 }}
-    >
-      <Text style={styles.shareLink}>{feedback ?? 'Compartir'}</Text>
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => setOpen(true)}
+        hitSlop={8}
+        style={({ pressed }) => pressed && { opacity: 0.6 }}
+      >
+        <Text style={styles.shareLink}>Compartir</Text>
+      </Pressable>
+      {open && <ShareSheet text={text} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 

@@ -10,7 +10,9 @@ import {
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { FONTS, TextScaleContext } from '@/components/AppText';
+import { FavoriteStar } from '@/components/FavoriteStar';
 import { HomeButton } from '@/components/HomeButton';
+import { ALL_GAMES } from '@/games/catalog';
 import { themeFor } from '@/gameTheme';
 import { SettingsContext, useSettingsState } from '@/settings';
 
@@ -43,6 +45,10 @@ export default function RootLayout() {
               // Always shown, so a game opened from a link or after a reload can still get back to the menu.
               headerLeft: () => <HomeButton />,
               headerBackVisible: false,
+              // Games can be starred from their own screen too.
+              headerRight: ALL_GAMES.some((g) => g.id === route.name)
+                ? () => <FavoriteStar game={route.name} color="#fff" size={28} />
+                : undefined,
             };
           }}
         >
